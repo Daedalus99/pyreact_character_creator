@@ -112,7 +112,7 @@ For development, I previously used a Vite dev proxy so the frontend could call /
 
 ---
 
-# Questions ChatGPT asked when given this readme:
+# Answers to questions ChatGPT asked when given this readme:
 1. Are you planning to package with Electron, Tauri, PyWebView, or start as a local web app?
     - Electron
 2. Do you want chat history to support branches/alternate regenerations, or only one linear timeline?
