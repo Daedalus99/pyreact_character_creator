@@ -10,7 +10,7 @@ const providers = [
 export default function FooterMenu({ activePage, onChangePage }) {
   return (
     <footer className="footer-menu">
-      <label>
+      <label style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         AI Provider
         <select defaultValue="lmstudio">
           {providers.map((provider) => (
@@ -20,11 +20,13 @@ export default function FooterMenu({ activePage, onChangePage }) {
           ))}
         </select>
       </label>
+      {/*
       <div className="footer-actions">
         <button type="button" onClick={() => onChangePage('settings')}>
           Provider settings
         </button>
       </div>
+      */}
     </footer>
   );
 }
