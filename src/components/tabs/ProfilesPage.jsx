@@ -4,18 +4,18 @@ import CardGrid from '../panels/CardGrid';
 import EntityCard from '../cards/EntityCard';
 
 const sampleProfiles = [
-  { id: 'u1', label: 'Alex', subtitle: 'Player Persona' },
+    { id: 'u1', label: 'Alex', subtitle: 'Player Persona' },
 ];
 
 export default function ProfilesPage() {
-  return (
-    <BasePage title="User Persona" description="Manage your own persona for chats.">
-      <CardGrid>
-        <EntityCard isNew label="New Persona" />
-        {sampleProfiles.map((profile) => (
-          <EntityCard key={profile.id} label={profile.label} subtitle={profile.subtitle} />
-        ))}
-      </CardGrid>
-    </BasePage>
-  );
+    return (
+        <BasePage title="User Persona" description="Manage your own persona for chats.">
+            <CardGrid>
+                <EntityCard isNew label="New Persona" />
+                {sampleProfiles.map((profile) => (
+                    <EntityCard key={profile.id} label={profile.label} subtitle={profile.subtitle} />
+                ))}
+            </CardGrid>
+        </BasePage>
+    );
 }

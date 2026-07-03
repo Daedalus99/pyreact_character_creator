@@ -17,6 +17,19 @@ function createWindow() {
     // Pressing Alt may still reveal it unless the app menu is removed.
     autoHideMenuBar: true,
 
+    titleBarStyle: 'hidden',
+
+    ...(process.platform !== 'darwin'
+      ? {
+          titleBarOverlay: {
+            color: '#111827',
+            symbolColor: '#f8fafc',
+            height: 36,
+          },
+        }
+      : {}),
+
+    icon: 'icon_chat.svg',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
