@@ -3,6 +3,8 @@
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: #f8fafc;
   background: #0f172a;
+  --sidebar-width: min(30vw, 75px);
+  --footer-height: min(30vh, 64px);
 }
 
 body {
@@ -23,7 +25,7 @@ body {
   left: 0;
   top: 0;
   height: 100vh;
-  width: min(30vw, 75px);
+  width: var(--sidebar-width);
   background: #111827;
   padding: .5rem;
   display: flex;
@@ -32,16 +34,22 @@ body {
 }
 
 .app-content {
+  position:fixed;
+  right: 0;
+  top: 0;
+  width: calc(100vw - var(--sidebar-width));
+  height: calc(100vh - var(--footer-height));
   padding: 1.5rem;
-  background: linear-gradient(180deg, #111827 0%, #0f172a 100%);
+  background: linear-gradient(180deg, #111827 0%, #000000 100%);
 }
 
 .footer-menu {
   position:fixed;
   right: 0;
   bottom: 0;
-  width: 100%;
-  background: #111827;
+  width: calc(100vw - var(--sidebar-width));
+  height: var(--footer-height);
+  background: #1c1127;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -98,6 +106,7 @@ body {
 }
 
 .entity-card {
+  position: relative;
   padding: 1rem;
   border-radius: 20px;
   background: #1f2937;
@@ -111,6 +120,8 @@ body {
 }
 
 .card-thumbnail {
+  position: relative;
+  overflow: hidden;
   width: 100%;
   min-height: 120px;
   border-radius: 16px;
@@ -118,11 +129,26 @@ body {
   display: grid;
   place-items: center;
   font-size: 1.5rem;
+  aspect-ratio: .75;
 }
 
 .card-actions {
+  position: absolute;
+  top: 0.1rem;
+  right: 0.1rem;
+  align-content: right;
   display: flex;
-  gap: 0.5rem;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+  width: 50%;
+}
+
+.entity-card:hover .card-actions,
+.entity-card:focus-within .card-actions {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .settings-grid {
