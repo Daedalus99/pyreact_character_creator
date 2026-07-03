@@ -1,16 +1,24 @@
 import IconButton from '../cards/IconButton';
 
+const iconUrlNew = '/icons/icon_add.svg';
+const iconUrlDflt = '/icons/icon_image.svg';
+
 // EntityCard represents a reusable card in the grid for chats, characters, or image targets.
 export default function EntityCard({ isNew, label, subtitle }) {
+  const thumbnailIconUrl = isNew ? iconUrlNew : iconUrlDflt;
   return (
     <article className={`entity-card ${isNew ? 'new-card' : ''}`}>
       <div className="card-thumbnail">
-        {isNew ? '+' : 'IMG'}
+        <img
+          className="card-thumbnail-icon"
+          src={thumbnailIconUrl}
+          alt={isNew ? 'Add new item' : ''}
+        />
 
         {!isNew && (
           <div className="card-actions">
-            <IconButton size="50%" iconUrl="/icons/chat_icon_edit.svg" />
-            <IconButton size="50%" iconUrl="/icons/chat_icon_delete.svg" />
+            <IconButton iconUrl="/icons/chat_icon_edit.svg" />
+            <IconButton iconUrl="/icons/chat_icon_delete.svg" />
           </div>
         )}
       </div>

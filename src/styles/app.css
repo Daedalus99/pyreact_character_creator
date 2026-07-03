@@ -76,6 +76,14 @@ body {
   color: #f8fafc;
 }
 
+.icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  filter: brightness(0) invert();
+}
+
 .page-shell {
   display: flex;
   flex-direction: column;
@@ -84,7 +92,7 @@ body {
 
 .page-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   gap: 1rem;
   align-items: flex-start;
 }
@@ -112,6 +120,14 @@ body {
   background: #1f2937;
   display: grid;
   gap: 0.75rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .new-card {
@@ -125,11 +141,20 @@ body {
   width: 100%;
   min-height: 120px;
   border-radius: 16px;
-  background: #374151;
-  display: grid;
-  place-items: center;
-  font-size: 1.5rem;
   aspect-ratio: .75;
+
+  background: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-thumbnail-icon {
+  display: block;
+  width: 100%;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: brightness(0) invert();
 }
 
 .card-actions {
@@ -163,13 +188,7 @@ body {
   border-radius: 1rem;
 }
 
-.icon {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: contain;
-  filter: brightness(0) invert();
-}
+
 
 .icon-label {
   font-size: 0.9rem;
