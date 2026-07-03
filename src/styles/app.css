@@ -23,12 +23,12 @@ body {
   left: 0;
   top: 0;
   height: 100vh;
-  width: min(30vw, 128px);
+  width: min(30vw, 75px);
   background: #111827;
-  padding: 1rem;
+  padding: .5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .app-content {
@@ -37,11 +37,14 @@ body {
 }
 
 .footer-menu {
-  grid-column: 1 / -1;
+  position:fixed;
+  right: 0;
+  bottom: 0;
+  width: 100%;
   background: #111827;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 1rem;
   padding: 1rem 1.5rem;
 }
@@ -132,4 +135,18 @@ body {
   background: #111827;
   padding: 1rem;
   border-radius: 1rem;
+}
+
+.icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  filter: brightness(0) invert();
+}
+
+.icon-label {
+  font-size: 0.9rem;
+  margin-top: 6px;
+  color: #cbd5e1;
 }
