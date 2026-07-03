@@ -25,11 +25,11 @@ function createWindow() {
             color: '#111827',
             symbolColor: '#f8fafc',
             height: 36,
+            borderColor: '#1f2937',
           },
         }
       : {}),
 
-    icon: 'icon_chat.svg',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,

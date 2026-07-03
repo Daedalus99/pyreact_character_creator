@@ -5,7 +5,7 @@
     background: #0f172a;
     --sidebar-width: min(30vw, 75px);
     --footer-height: min(30vh, 50px);
-    --title-bar-height: 36px;
+    --title-bar-height: 38px;
 }
 
 body {
@@ -14,28 +14,34 @@ body {
 }
 
 .title-bar {
-    height: 36px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    
+    height: var(--title-bar-height);
     background: #111827;
     color: #f8fafc;
 
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: left;
 
     user-select: none;
-
+    border-bottom: 2px solid #1f2937;
     /* Electron drag region */
     -webkit-app-region: drag;
-    app-region: drag;
 }
 
 .title-bar-name {
     font-size: 0.85rem;
     font-weight: 600;
     color: #f8fafc;
+    padding: 0 1rem;
 }
 
 .app-shell {
+    top: var(--title-bar-height);
     display: grid;
     grid-template-columns: 96px 1fr;
     grid-template-rows: 1fr auto;
@@ -45,8 +51,8 @@ body {
 .sidebar {
     /*grid-row: 1 / span 2;*/
     position: fixed;
+    top: var(--title-bar-height);
     left: 0;
-    top: 0;
     right: calc(100vw - var(--sidebar-width));
     bottom: 0;
 
@@ -63,7 +69,7 @@ body {
 .app-content {
     position: fixed;
     left: var(--sidebar-width);
-    top: 0;
+    top: var(--title-bar-height);
     right: 0;
     bottom: var(--footer-height);
 
