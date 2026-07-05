@@ -3,30 +3,52 @@ import IconButton from '../cards/IconButton';
 const iconUrlNew = '/icons/icon_add.svg';
 const iconUrlDflt = '/icons/icon_image.svg';
 
-// EntityCard represents a reusable card in the grid for chats, characters, or image targets.
-export default function EntityCard({ isNew, label, subtitle }) {
+export default function EntityCard({
+    isNew,
+    label,
+    subtitle,
+    onOpen,
+    onEdit,
+    onDelete,
+}) {
     const thumbnailIconUrl = isNew ? iconUrlNew : iconUrlDflt;
+
     return (
         <article className={`entity-card ${isNew ? 'new-card' : ''}`}>
-            <div className="card-thumbnail">
-                <img
-                    className="card-thumbnail-icon"
-                    src={thumbnailIconUrl}
-                    alt={isNew ? 'Add new item' : ''}
-                />
+            <button
+                type="button"
+                className="entity-card-main"
+                onClick={onOpen}
+                aria-label={isNew ? 'Add new item' : `Open ${label}`}
+            >
+                <div className="card-thumbnail">
+                    <img
+                        className="card-thumbnail-icon"
+                        src={thumbnailIconUrl}
+                        alt=""
+                    />
+                </div>
 
-                {!isNew && (
-                    <div className="card-actions">
-                        <IconButton iconUrl="/icons/chat_icon_edit.svg" />
-                        <IconButton iconUrl="/icons/chat_icon_delete.svg" />
-                    </div>
-                )}
-            </div>
+                <div className="card-details">
+                    <strong>{label}</strong>
+                    {subtitle && <small>{subtitle}</small>}
+                </div>
+            </button>
 
-            <div className="card-details">
-                <strong>{label}</strong>
-                {subtitle && <small>{subtitle}</small>}
-            </div>
+            {!isNew && (
+                <div className="card-actions">
+                    <IconButton
+                        iconUrl="/icons/chat_icon_edit.svg"
+                        ariaLabel={`Edit ${label}`}
+                        onClick={onEdit}
+                    />
+                    <IconButton
+                        iconUrl="/icons/chat_icon_delete.svg"
+                        ariaLabel={`Delete ${label}`}
+                        onClick={onDelete}
+                    />
+                </div>
+            )}
         </article>
     );
 }

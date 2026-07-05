@@ -151,12 +151,35 @@ body {
 }
 
 .entity-card {
+    --card-padding: 0.5rem;
     position: relative;
-    padding: .5rem;
+    padding: var(--card-padding);
     border-radius: 20px;
     background: #1f2937;
     display: grid;
     min-width: 0;
+}
+
+.entity-card-main {
+    appearance: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+    cursor: pointer;
+
+    display: grid;
+    min-width: 0;
+    width: 100%;
+}
+
+.entity-card-main:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 4px;
+    border-radius: 16px;
 }
 
 .card-details {
@@ -193,15 +216,14 @@ body {
 
 .card-actions {
     position: absolute;
-    top: 0.1rem;
-    right: 0.1rem;
-    align-content: right;
+    top: calc(var(--card-padding) + 0.1rem);
+    right: calc(var(--card-padding) + 0.1rem);
     display: flex;
-
+    z-index: 2;
+    height: 15%;
     opacity: 0;
     pointer-events: none;
     transition: opacity 120ms ease;
-    width: 50%;
 }
 
 .entity-card:hover .card-actions,
@@ -209,7 +231,6 @@ body {
     opacity: 1;
     pointer-events: auto;
 }
-
 .settings-grid {
     display: grid;
     gap: 1rem;
