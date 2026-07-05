@@ -2,6 +2,7 @@
 import BasePage from './BasePage';
 import CardGrid from '../panels/CardGrid';
 import EntityCard from '../cards/EntityCard';
+import CharacterWizard from '../forms/CharacterWizard';
 
 const sampleCharacters = [
     { id: 'c1', label: 'Astra', subtitle: 'Space Bard' },
@@ -12,10 +13,13 @@ export default function CharactersPage() {
     return (
         <BasePage title="Characters" description="Create and edit character personas for roleplay.">
             <CardGrid>
+                
                 <EntityCard isNew label="New Character" />
+
                 {sampleCharacters.map((character) => (
                     <EntityCard key={character.id} label={character.label} subtitle={character.subtitle} />
                 ))}
+
             </CardGrid>
         </BasePage>
     );
