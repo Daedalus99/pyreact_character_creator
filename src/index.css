@@ -34,6 +34,11 @@ body {
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
 }
 
+img {
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
 button {
     appearance: none;
 

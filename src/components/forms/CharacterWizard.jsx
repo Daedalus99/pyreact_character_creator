@@ -5,6 +5,14 @@ import { characterCreationSteps } from '../../data/characterCreationSteps';
 const iconUrlDice = '/icons/icon_dice.svg';
 
 export default function CharacterWizard({ onChangePage }) {
+    const [draft, setDraft] = useState({
+        name: '',
+        age: 30,
+        selectedOptionIdsByGroup: {},
+        customTextByGroup: {},
+        loreEntries: [],
+    });
+
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [currentAge, setCurrentAge] = useState(30);
     
@@ -16,6 +24,16 @@ export default function CharacterWizard({ onChangePage }) {
 
     function randomizeCharacter() {
         console.log('Randomize character');
+    }
+
+    function updateGroupSelection(groupId, nextSelected) {
+        setDraft((previousDraft) => ({
+            ...previousDraft,
+            selectedOptionIdsByGroup: {
+                ...previousDraft.selectedOptionIdsByGroup,
+                [groupId]: nextSelected,
+            },
+        }));
     }
 
     return (
@@ -95,12 +113,14 @@ export default function CharacterWizard({ onChangePage }) {
 
                     {currentStep.optionGroups.length > 0 ? (
                         currentStep.optionGroups.map((group) => (
-                            <OptionGroupSelector
-                                key={group.id || group.title}
-                                title={group.title}
-                                multi={group.maxSelectable !== 1}
-                                options={group.options}
-                            />
+                            <>
+                                <OptionGroupSelector
+                                    group={group}
+                                    selected={draft.selectedOptionIdsByGroup[group.id] ?? []}
+                                    onChange={(nextSelected) => updateGroupSelection(group.id, nextSelected)}
+                                />
+                                <hr style={{width: '100%'}} />
+                            </>
                         ))
                     ) : (
                         <p className="empty-step-message">
