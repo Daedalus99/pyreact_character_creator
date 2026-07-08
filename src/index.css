@@ -35,12 +35,74 @@ body {
 }
 
 button {
-  border: none;
-  border-radius: 999px;
-  padding: 0.5rem 1.2rem;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  background: #6ee7f9;
-  color: #07233e;
+    appearance: none;
+
+    border: 1px solid #374151;
+    border-radius: 999px;
+    padding: 0.55rem 1.15rem;
+
+    background: #1f2937;
+    color: #f8fafc;
+
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 120ms ease,
+        border-color 120ms ease,
+        color 120ms ease,
+        box-shadow 120ms ease,
+        transform 120ms ease;
+}
+
+button:hover {
+    background: #293548;
+    border-color: #4b5563;
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+button:focus-visible {
+    outline: 2px solid #818cf8;
+    outline-offset: 3px;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+/* Global scrollbar styling */
+
+* {
+    scrollbar-width: medium;
+    scrollbar-color: #4b5563 #020617;
+}
+
+*::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+*::-webkit-scrollbar-track {
+    background: #020617;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: #374151;
+    border-radius: 999px;
+    border: 3px solid #020617;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: #4b5563;
+}
+
+*::-webkit-scrollbar-corner {
+    background: #020617;
 }
