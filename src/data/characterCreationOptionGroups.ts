@@ -1,4 +1,4 @@
-import type { OptionGroup, Option } from "../types/characterCreationtypes";
+import type { OptionGroup, Option } from "../types/characterCreationTypes";
 
 const defaultImage =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%233a3a46'/%3E%3Ccircle cx='150' cy='115' r='48' fill='%2370707d'/%3E%3Cpath d='M65 260c12-60 55-92 85-92s73 32 85 92' fill='%2370707d'/%3E%3C/svg%3E";
@@ -12,19 +12,19 @@ export const genderOptionGroup: OptionGroup = {
   options: [
     {
         id: "gender_male", displayText: "Male",
-        imageUrl: "/gender_male.png", altText: "gender_male"
+        imageUrl: "/options/gender_male.png", altText: "gender_male"
     },
     {
         id: "gender_female", displayText: "Female",
-        imageUrl: "/gender_female.png", altText: "gender_female"
+        imageUrl: "/options/gender_female.png", altText: "gender_female"
     },
     {
         id: "gender_androgynous", displayText: "Androgynous",
-        imageUrl: "/gender_androgynous.png", altText: "gender_androgynous"
+        imageUrl: "/options/gender_androgynous.png", altText: "gender_androgynous"
     },
     {
         id: "gender_futanari", displayText: "Futanari",
-        imageUrl: "/gender_futanari.png", altText: "gender_futanari"
+        imageUrl: "/options/gender_futanari.png", altText: "gender_futanari"
     },
   ]
 };
@@ -38,11 +38,11 @@ export const artstyleOptionGroup : OptionGroup = {
   options: [
     {
         id: "artstyle_realistic", displayText: "Realistic",
-        imageUrl: "/artstyle_realistic.png", altText: "artstyle"
+        imageUrl: "/options/artstyle_realistic.png", altText: "artstyle"
     },
     {
         id: "artstyle_anime", displayText: "Anime",
-        imageUrl: "/artstyle_anime.png", altText: "artstyle"
+        imageUrl: "/options/artstyle_anime.png", altText: "artstyle"
     },
   ]
 };
