@@ -3,16 +3,20 @@
 import BaseForm from './BaseForm';
 import OptionGroupSelector from './OptionGroupSelector';
 
-export default function CharacterWizard() {
+export default function CharacterWizard({ onChangePage }) {
     return (
         <BaseForm
             title="Create Character"
             description="Build a persona with name, appearance, traits, and backstory."
             actions={
                 <>
-                    <button type="button">Back</button>
+                    <button type="button" onClick={() => onChangePage('characters')}>
+                        Back
+                    </button>
                     <button type="button">Next</button>
-                    <button type="button">Cancel</button>
+                    <button type="button" onClick={() => onChangePage('characters')}>
+                        Cancel
+                    </button>
                 </>
             }
         >

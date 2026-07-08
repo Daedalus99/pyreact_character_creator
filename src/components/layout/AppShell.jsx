@@ -8,6 +8,7 @@ import CharactersPage from '../tabs/CharactersPage';
 import ProfilesPage from '../tabs/ProfilesPage';
 import ImageGenerationPage from '../tabs/ImageGenerationPage';
 import SettingsPage from '../tabs/SettingsPage';
+import CharacterWizard from '../forms/CharacterWizard';
 
 const pageComponents = {
     chats: ChatsPage,
@@ -15,6 +16,7 @@ const pageComponents = {
     profiles: ProfilesPage,
     images: ImageGenerationPage,
     settings: SettingsPage,
+    'character-wizard': CharacterWizard,
 };
 
 export default function AppShell({ activePage, onChangePage }) {
@@ -24,7 +26,7 @@ export default function AppShell({ activePage, onChangePage }) {
         <div className="app-shell">
             <Sidebar activePage={activePage} onChangePage={onChangePage} />
             <main className="app-content">
-                <ActivePage />
+                <ActivePage onChangePage={onChangePage} />
             </main>
             <FooterMenu activePage={activePage} onChangePage={onChangePage} />
         </div>
