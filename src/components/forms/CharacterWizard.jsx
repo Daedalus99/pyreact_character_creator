@@ -2,13 +2,20 @@ import { useState } from 'react';
 import OptionGroupSelector from './OptionGroupSelector';
 import { characterCreationSteps } from '../../data/characterCreationSteps';
 
+const iconUrlDice = '/icons/icon_dice.svg';
+
 export default function CharacterWizard({ onChangePage }) {
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
-
+    const [currentAge, setCurrentAge] = useState(30);
+    
     const currentStep = characterCreationSteps[currentStepIndex];
 
     function cancelCharacterCreation() {
         onChangePage('characters');
+    }
+
+    function randomizeCharacter() {
+        console.log('Randomize character');
     }
 
     return (
@@ -35,6 +42,16 @@ export default function CharacterWizard({ onChangePage }) {
                 </nav>
 
                 <div className="character-wizard-sidebar-footer">
+                    <button
+                        type="button"
+                        className="randomize-icon-button"
+                        onClick={randomizeCharacter}
+                        aria-label="Randomize character"
+                        title="Randomize character"
+                    >
+                        <img src={iconUrlDice} alt="" />
+                    </button>
+
                     <button
                         type="button"
                         className="cancel-button"
@@ -64,8 +81,14 @@ export default function CharacterWizard({ onChangePage }) {
                             </label>
 
                             <label className="basic-info-field">
-                                Age
-                                <input type="range" min="18" max="100" defaultValue="30" />
+                                Age: {currentAge}
+                                <input
+                                    type="range"
+                                    min="18"
+                                    max="100"
+                                    value={currentAge}
+                                    onChange={(event) => setCurrentAge(Number(event.target.value))}
+                                />
                             </label>
                         </div>
                     )}
