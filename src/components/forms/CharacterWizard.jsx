@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import OptionGroupSelector from "./OptionGroupSelector";
 import { characterCreationSteps } from "../../data/characterCreationSteps";
 
@@ -14,7 +14,17 @@ export default function CharacterWizard({ onChangePage }) {
   });
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const mainTopRef = useRef(null);
+  function changeStep(index) {
+    setCurrentStepIndex(index);
 
+    requestAnimationFrame(() => {
+      mainTopRef.current?.scrollIntoView({
+        behavior: "auto",
+        block: "start",
+      });
+    });
+  }
   const currentStep = characterCreationSteps[currentStepIndex];
 
   function cancelCharacterCreation() {
@@ -50,7 +60,7 @@ export default function CharacterWizard({ onChangePage }) {
               className={`wizard-step-button ${
                 index === currentStepIndex ? "active" : ""
               }`}
-              onClick={() => setCurrentStepIndex(index)}
+              onClick={() => changeStep(index)}
             >
               <span>{step.title}</span>
               <span className="wizard-step-status">{index + 1}</span>
@@ -76,11 +86,18 @@ export default function CharacterWizard({ onChangePage }) {
           >
             Cancel
           </button>
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => console.log(draft)}
+          >
+            Log Draft
+          </button>
         </div>
       </aside>
 
       <main className="character-wizard-main">
-        <header className="character-wizard-header">
+        <header ref={mainTopRef} className="character-wizard-header">
           <h1>Create Character</h1>
           <p>Build a persona with name, appearance, traits, and backstory.</p>
         </header>
@@ -127,17 +144,26 @@ export default function CharacterWizard({ onChangePage }) {
           )}
 
           {currentStep.optionGroups.length > 0 ? (
-            currentStep.optionGroups.map((group) => (
-              <>
+            currentStep.optionGroups.map((group, index) => (
+              <div
+                className="option-group-section"
+                key={group.id || group.title}
+              >
                 <OptionGroupSelector
                   group={group}
-                  selected={draft.selectedOptionIdsByGroup[group.id] ?? []}
+                  selected={
+                    draft.selectedOptionIdsByGroup[group.id] ??
+                    (group.maxSelectable === 1 ? null : [])
+                  }
                   onChange={(nextSelected) =>
                     updateGroupSelection(group.id, nextSelected)
                   }
                 />
-                <hr style={{ width: "100%" }} />
-              </>
+
+                {index < currentStep.optionGroups.length - 1 && (
+                  <hr className="option-group-divider" />
+                )}
+              </div>
             ))
           ) : (
             <p className="empty-step-message">
