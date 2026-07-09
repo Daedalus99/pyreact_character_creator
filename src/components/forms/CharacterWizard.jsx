@@ -44,7 +44,36 @@ export default function CharacterWizard({ onChangePage }) {
       },
     }));
   }
+  function getSelectedCount(group) {
+    const selected = draft.selectedOptionIdsByGroup[group.id];
 
+    if (Array.isArray(selected)) {
+      return selected.length;
+    }
+
+    return selected ? 1 : 0;
+  }
+
+  function isGroupValid(group) {
+    const selectedCount = getSelectedCount(group);
+
+    const min = group.minSelectable ?? 0;
+    const max = group.maxSelectable ?? Infinity;
+
+    return selectedCount >= min && selectedCount <= max;
+  }
+
+  function isBasicInfoValid() {
+    return draft.name.trim().length > 0 && draft.age >= 18 && draft.age <= 100;
+  }
+
+  function isStepValid(step) {
+    if (step.id === "basic-info") {
+      return isBasicInfoValid();
+    }
+
+    return step.optionGroups.every((group) => isGroupValid(group));
+  }
   return (
     <div className="character-wizard-layout">
       <aside className="character-wizard-sidebar">
@@ -53,19 +82,32 @@ export default function CharacterWizard({ onChangePage }) {
         </div>
 
         <nav className="wizard-step-nav" aria-label="Character creation steps">
-          {characterCreationSteps.map((step, index) => (
-            <button
-              key={step.id}
-              type="button"
-              className={`wizard-step-button ${
-                index === currentStepIndex ? "active" : ""
-              }`}
-              onClick={() => changeStep(index)}
-            >
-              <span>{step.title}</span>
-              <span className="wizard-step-status">{index + 1}</span>
-            </button>
-          ))}
+          {characterCreationSteps.map((step, index) => {
+            const stepIsValid = isStepValid(step);
+
+            return (
+              <button
+                key={step.id}
+                type="button"
+                className={[
+                  "wizard-step-button",
+                  index === currentStepIndex ? "active" : "",
+                  stepIsValid ? "complete" : "incomplete",
+                ].join(" ")}
+                onClick={() => changeStep(index)}
+              >
+                <span>{step.title}</span>
+
+                <span
+                  className="wizard-step-status"
+                  aria-label={stepIsValid ? "Complete" : "Incomplete"}
+                  title={stepIsValid ? "Complete" : "Incomplete"}
+                >
+                  {stepIsValid ? "✓" : "!"}
+                </span>
+              </button>
+            );
+          })}
         </nav>
 
         <div className="character-wizard-sidebar-footer">
@@ -86,14 +128,23 @@ export default function CharacterWizard({ onChangePage }) {
           >
             Cancel
           </button>
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => console.log(draft)}
-          >
-            Log Draft
-          </button>
         </div>
+        <button
+          type="button"
+          className="log-draft-button"
+          onClick={() => {
+            console.log("Draft:", draft);
+            console.log(
+              "Step validity:",
+              characterCreationSteps.map((step) => ({
+                step: step.title,
+                valid: isStepValid(step),
+              })),
+            );
+          }}
+        >
+          Log Draft
+        </button>
       </aside>
 
       <main className="character-wizard-main">
