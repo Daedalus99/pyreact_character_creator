@@ -3,37 +3,37 @@ import type { OptionGroup, Option } from "../types/characterCreationTypes";
 const defaultImage =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%233a3a46'/%3E%3Ccircle cx='150' cy='115' r='48' fill='%2370707d'/%3E%3Cpath d='M65 260c12-60 55-92 85-92s73 32 85 92' fill='%2370707d'/%3E%3C/svg%3E";
 
-export const genderOptionGroup: OptionGroup = {
+//Export individual options so we can reference them in our visibility
+export const genderFemaleOption: Option = {
+  id: "gender_female",
+  displayText: "Female",
+};
+
+export const genderMaleOption: Option = {
+  id: "gender_male",
+  displayText: "Male",
+};
+
+export const genderFutanariOption: Option = {
+  id: "gender_futanari",
+  displayText: "Futanari",
+};
+
+export const genderAndrogynousOption: Option = {
+  id: "gender_androgynous",
+  displayText: "Androgynous",
+};
+
+export const genderOptionGroup = {
   id: "gender",
   title: "Gender",
   minSelectable: 1,
   maxSelectable: 1,
-  allowCustomOptions: true,
   options: [
-    {
-      id: "gender_male",
-      displayText: "Male",
-      imageUrl: "/options/gender_male.png",
-      altText: "gender_male",
-    },
-    {
-      id: "gender_female",
-      displayText: "Female",
-      imageUrl: "/options/gender_female.png",
-      altText: "gender_female",
-    },
-    {
-      id: "gender_androgynous",
-      displayText: "Androgynous",
-      imageUrl: "/options/gender_androgynous.png",
-      altText: "gender_androgynous",
-    },
-    {
-      id: "gender_futanari",
-      displayText: "Futanari",
-      imageUrl: "/options/gender_futanari.png",
-      altText: "gender_futanari",
-    },
+    genderFemaleOption,
+    genderMaleOption,
+    genderFutanariOption,
+    genderAndrogynousOption,
   ],
 };
 
@@ -421,11 +421,35 @@ export const bodyTypeOptionGroup: OptionGroup = {
   ],
 };
 
+export const breastSizeNoneOption: Option = {
+  id: "breast_size_none",
+  displayText: "No Breasts",
+};
+
 export const breastSizeOptionGroup: OptionGroup = {
   id: "breast_size",
   title: "Breast Size",
   minSelectable: 1,
   maxSelectable: 1,
+
+  conditionalOverrides: [
+    {
+      when: {
+        group: genderOptionGroup,
+        options: [genderMaleOption],
+      },
+      visible: false,
+    },
+    {
+      when: {
+        group: genderOptionGroup,
+        options: [genderAndrogynousOption],
+      },
+      visible: true,
+      addOptions: [breastSizeNoneOption],
+    },
+  ],
+
   allowCustomOptions: true,
   options: [
     {
@@ -461,10 +485,9 @@ export const breastSizeOptionGroup: OptionGroup = {
   ],
 };
 
-export const noneBreastSizeOption: Option = {
-  id: "breast_size_none",
-  displayText: "None",
-  imageUrl: "default.png",
+export const cockSizeNoneOption: Option = {
+  id: "cock_size_none",
+  displayText: "No Cock",
 };
 
 export const cockSizeOptionGroup: OptionGroup = {
@@ -472,6 +495,24 @@ export const cockSizeOptionGroup: OptionGroup = {
   title: "Cock Size",
   minSelectable: 1,
   maxSelectable: 1,
+
+  conditionalOverrides: [
+    {
+      when: {
+        group: genderOptionGroup,
+        options: [genderFemaleOption],
+      },
+      visible: false,
+    },
+    {
+      when: {
+        group: genderOptionGroup,
+        options: [genderAndrogynousOption],
+      },
+      visible: true,
+      addOptions: [cockSizeNoneOption],
+    },
+  ],
   allowCustomOptions: true,
   options: [
     {
@@ -505,12 +546,6 @@ export const cockSizeOptionGroup: OptionGroup = {
       altText: "Humongous cock size option",
     },
   ],
-};
-
-export const noneCockSizeOption: Option = {
-  id: "cock_size_none",
-  displayText: "None",
-  imageUrl: "default.png",
 };
 
 export const buttSizeOptionGroup: OptionGroup = {

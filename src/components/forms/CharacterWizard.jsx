@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import OptionGroupSelector from "./OptionGroupSelector";
 import { characterCreationSteps } from "../../data/characterCreationSteps";
-
+import { createRandomCharacterDraft } from "../../utils/characterRandomizer";
+import { isGroupSelectionValid } from "../../utils/characterCreationRules";
 const iconUrlDice = "/icons/icon_dice.svg";
 
 export default function CharacterWizard({ onChangePage }) {
@@ -32,7 +33,7 @@ export default function CharacterWizard({ onChangePage }) {
   }
 
   function randomizeCharacter() {
-    console.log("Randomize character");
+    setDraft(createRandomCharacterDraft(characterCreationSteps));
   }
 
   function updateGroupSelection(groupId, nextSelected) {
@@ -44,24 +45,6 @@ export default function CharacterWizard({ onChangePage }) {
       },
     }));
   }
-  function getSelectedCount(group) {
-    const selected = draft.selectedOptionIdsByGroup[group.id];
-
-    if (Array.isArray(selected)) {
-      return selected.length;
-    }
-
-    return selected ? 1 : 0;
-  }
-
-  function isGroupValid(group) {
-    const selectedCount = getSelectedCount(group);
-
-    const min = group.minSelectable ?? 0;
-    const max = group.maxSelectable ?? Infinity;
-
-    return selectedCount >= min && selectedCount <= max;
-  }
 
   function isBasicInfoValid() {
     return draft.name.trim().length > 0 && draft.age >= 18 && draft.age <= 100;
@@ -72,8 +55,34 @@ export default function CharacterWizard({ onChangePage }) {
       return isBasicInfoValid();
     }
 
-    return step.optionGroups.every((group) => isGroupValid(group));
+    return step.optionGroups.every((group) =>
+      isGroupSelectionValid(group, draft.selectedOptionIdsByGroup[group.id]),
+    );
   }
+
+  function isCharacterDraftValid() {
+    return characterCreationSteps.every((step) => isStepValid(step));
+  }
+
+  function finishCharacterCreation() {
+    const invalidSteps = characterCreationSteps.filter(
+      (step) => !isStepValid(step),
+    );
+
+    if (invalidSteps.length > 0) {
+      console.log(
+        "Cannot finish. Invalid steps:",
+        invalidSteps.map((step) => step.title),
+      );
+      return;
+    }
+
+    console.log("Finished character draft:", draft);
+
+    // Temporary behavior for now.
+    onChangePage("characters");
+  }
+
   return (
     <div className="character-wizard-layout">
       <aside className="character-wizard-sidebar">
@@ -84,7 +93,6 @@ export default function CharacterWizard({ onChangePage }) {
         <nav className="wizard-step-nav" aria-label="Character creation steps">
           {characterCreationSteps.map((step, index) => {
             const stepIsValid = isStepValid(step);
-
             return (
               <button
                 key={step.id}
@@ -144,6 +152,14 @@ export default function CharacterWizard({ onChangePage }) {
           }}
         >
           Log Draft
+        </button>
+        <button
+          type="button"
+          className="primary-button"
+          disabled={!isCharacterDraftValid()}
+          onClick={finishCharacterCreation}
+        >
+          Finish
         </button>
       </aside>
 

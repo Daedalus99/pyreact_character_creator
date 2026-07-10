@@ -1,4 +1,12 @@
 import { useId } from "react";
+import {
+  getGroupValidityText,
+  getOptionValue,
+  getResolvedSelectionRules,
+  getSelectedCount,
+  getSelectionRuleText,
+  normalizeSelectedValue,
+} from "../../utils/characterCreationRules";
 
 export default function OptionGroupSelector({
   group,
@@ -9,76 +17,49 @@ export default function OptionGroupSelector({
   onChange,
 }) {
   const groupId = useId();
+
   const resolvedTitle = group?.title ?? title;
   const resolvedOptions = group?.options ?? options ?? [];
 
+  const rules = getResolvedSelectionRules(
+    group ?? { maxSelectable: multi ? null : 1 },
+  );
+
+  const resolvedSelected = normalizeSelectedValue(selected, rules.isMulti);
+  const selectedCount = getSelectedCount(selected, rules.isMulti);
+  const selectionRuleText = getSelectionRuleText(
+    group ?? { maxSelectable: multi ? null : 1 },
+  );
+
+  const validityText = getGroupValidityText(
+    group ?? { maxSelectable: multi ? null : 1 },
+    selected,
+  );
+
+  const isSelectionValid = validityText === "valid";
+
   const hasExplicitMaxSelectable =
     group && Object.prototype.hasOwnProperty.call(group, "maxSelectable");
-
-  const resolvedMinSelectable = group?.minSelectable ?? 0;
-
-  const resolvedMaxSelectable = hasExplicitMaxSelectable
-    ? group.maxSelectable === null
-      ? Infinity
-      : group.maxSelectable
-    : multi
-      ? Infinity
-      : 1;
-
-  const resolvedMulti = multi ?? resolvedMaxSelectable !== 1;
-
-  const resolvedSelected = resolvedMulti
-    ? Array.isArray(selected)
-      ? selected
-      : selected
-        ? [selected]
-        : []
-    : (selected ?? null);
-
-  const selectedCount = resolvedMulti
-    ? resolvedSelected.length
-    : resolvedSelected
-      ? 1
-      : 0;
-
-  const isSelectionValid =
-    selectedCount >= resolvedMinSelectable &&
-    selectedCount <= resolvedMaxSelectable;
-
-  const isOptional = resolvedMinSelectable < 1;
-
-  const selectionRuleText =
-    resolvedMinSelectable === resolvedMaxSelectable
-      ? `Select ${resolvedMinSelectable}`
-      : resolvedMaxSelectable === Infinity
-        ? `Select ${resolvedMinSelectable}+`
-        : `Select ${resolvedMinSelectable}-${resolvedMaxSelectable}`;
-
-  const validityText = isSelectionValid
-    ? "valid"
-    : selectedCount < resolvedMinSelectable
-      ? `${resolvedMinSelectable - selectedCount} more required`
-      : `${selectedCount - resolvedMaxSelectable} too many`;
 
   function getOptionValue(option, index) {
     return option.id ?? option.value ?? option.label ?? String(index);
   }
 
   function isSelected(value) {
-    return resolvedMulti
+    return rules.isMulti
       ? resolvedSelected.includes(value)
       : resolvedSelected === value;
   }
   function handleSelect(value) {
     let nextSelected;
 
-    if (resolvedMulti) {
+    if (rules.isMulti) {
       const alreadySelected = resolvedSelected.includes(value);
 
       if (alreadySelected) {
         nextSelected = resolvedSelected.filter((item) => item !== value);
       } else {
-        if (resolvedSelected.length >= resolvedMaxSelectable) {
+        if (resolvedSelected.length >= rules.maxSelectable) {
           return;
         }
 
@@ -91,13 +72,13 @@ export default function OptionGroupSelector({
     onChange?.(nextSelected);
   }
   function isOptionDisabled(value) {
-    if (!resolvedMulti) {
+    if (!rules.isMulti) {
       return false;
     }
 
     const alreadySelected = resolvedSelected.includes(value);
 
-    return !alreadySelected && resolvedSelected.length >= resolvedMaxSelectable;
+    return !alreadySelected && resolvedSelected.length >= rules.maxSelectable;
   }
 
   return (
@@ -105,7 +86,7 @@ export default function OptionGroupSelector({
       <legend className="option-group-legend">
         <span className="option-group-legend-title">
           {resolvedTitle}
-          {isOptional && (
+          {rules.isOptional && (
             <span className="option-group-optional"> (optional)</span>
           )}
         </span>
@@ -137,7 +118,7 @@ export default function OptionGroupSelector({
             >
               <input
                 id={inputId}
-                type={resolvedMulti ? "checkbox" : "radio"}
+                type={rules.isMulti ? "checkbox" : "radio"}
                 name={groupId}
                 value={value}
                 checked={checked}

@@ -8,6 +8,30 @@ export type Option = {
   descriptionText?: string;
 };
 
+export type OptionRef = {
+  id: string;
+};
+
+export type OptionGroupRef = {
+  id: string;
+};
+
+export type ConditionalOverride = {
+  when: {
+    group: OptionGroupRef;
+    options: OptionRef[];
+    match?: "any" | "all";
+  };
+
+  visible?: boolean;
+
+  minSelectable?: number;
+  maxSelectable?: number | null;
+
+  addOptions?: Option[];
+  replaceOptions?: Option[];
+};
+
 export type OptionGroup = {
   id: string;
   title: string;
@@ -15,6 +39,8 @@ export type OptionGroup = {
 
   minSelectable: number;
   maxSelectable: number | null;
+
+  conditionalOverrides?: ConditionalOverride[];
 
   allowCustomOptions?: boolean;
   customOptionsPlaceholder?: string;
@@ -35,7 +61,7 @@ export type CreationStep = {
 export type CharacterDraft = {
   name: string;
   age: number;
-  selectedOptionIdsByGroup: Record<string, string[]>;
+  selectedOptionIdsByGroup: Record<string, string | string[] | null>;
   customTextByGroup: Record<string, string>;
   loreEntries: string[];
 };

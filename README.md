@@ -1,4 +1,4 @@
-I'm starting a new programming project inspired by https://backyard.ai/. I want to build a standalone desktop application that uses React for the frontend and Python for the backend. The application will act as a chat interface for AI character roleplay, and it should eventually work with both locally installed models and mainstream APIs such as Gemini, Grok, ChatGPT/OpenAI-compatible APIs, and other providers. I'll also support image generation for characters, user personas, and chat thumbnails. Ideally for image generation I'll be able to somehow use https://pixai.art/en/generator/image.
+I'm starting a new programming project inspired by https://backyard.ai/. I want to build a standalone desktop application that uses React for the frontend and Python for the backend. The application will act as a chat interface for AI character roleplay, and it should eventually work with both locally installed models and mainstream APIs such as Gemini, Grok, ChatGPT/OpenAI-compatible APIs, and other providers. I'll also support image generation for characters, user personas, and chat thumbnails. Ideally for image generation I'll be able to somehow use https://pixai.art/en/generator/image, or https://perchance.org/ai-text-to-image-generator.
 
 For my prototype, I want to connect to my local model through a locally hosted LM Studio server. My current LM Studio setup exposes an OpenAI-compatible endpoint at:
 
@@ -11,19 +11,19 @@ gemma-4-26b-a4b-it
 The request format should be OpenAI-style:
 
 {
-  "model": "gemma-4-26b-a4b-it",
-  "messages": [
-    {
-      "role": "system",
-      "content": "..."
-    },
-    {
-      "role": "user",
-      "content": "..."
-    }
-  ],
-  "temperature": 0.8,
-  "max_tokens": 500
+"model": "gemma-4-26b-a4b-it",
+"messages": [
+{
+"role": "system",
+"content": "..."
+},
+{
+"role": "user",
+"content": "..."
+}
+],
+"temperature": 0.8,
+"max_tokens": 500
 }
 For development, I previously used a Vite dev proxy so the frontend could call /lmstudio/v1/chat/completions instead of hitting localhost:7095 directly, avoiding browser CORS/preflight issues. In this new version, since I am using a Python backend, the React frontend should call my Python backend, and the Python backend should call LM Studio or other model providers.
 
@@ -32,10 +32,12 @@ For development, I previously used a Vite dev proxy so the frontend could call /
 # Here is my current list of requirements for app functionality:
 
 ## Omnipresent (every screen)
+
 - On the left persists a sidebar with square icons representing Chats, Characters, User, Image Generation, Settings, etc.
-- On the bottom persists a footer displaying a dropdown (drop up?) menu that lets you select what AI you want to use. You can select from LM Studio server, Gemini, Grok, or OpenAI-compatible APIs. 
+- On the bottom persists a footer displaying a dropdown (drop up?) menu that lets you select what AI you want to use. You can select from LM Studio server, Gemini, Grok, or OpenAI-compatible APIs.
 
 ## Chat Management (Chats Tab)
+
 - This is the default tab that opens when the app first launches.
 - The main content area should show a grid of interactable cards representing created chats.
 - Clicking a chat card should open that chat.
@@ -44,13 +46,15 @@ For development, I previously used a Vite dev proxy so the frontend could call /
 - Clicking the "New Chat" or "Edit Chat" buttons should bring you to that chat's creation/settings page.
 
 ### Chat Creation/Settings
+
 - In the chat settings you will be able to select a user profile, and one or more characters that will be able to interact.
 - There will be configurable options to set the narration's perspective, tense, genre, setting, and tone.
 - For each character added to the chat settings, you should be able to assign their relationship to the user and the other characters if applicable.
 - Other settings include: Chat title, and chat thumbnail/image.
-- Obviously there should be "save" and "cancel" buttons that are self explanatory. 
+- Obviously there should be "save" and "cancel" buttons that are self explanatory.
 
 ### Chat Interface
+
 - On the right side of the screen is a scrollable panel containing the user input and all the chat logs.
 - On the left side of the screen (if the window is wide enough) is a panel containing a summary of the Character you're chatting with, as well as their profile picture if they have one.
 - If the app window is not wide enough to fit both panels, the chat logs will take center stage.
@@ -64,11 +68,13 @@ For development, I previously used a Vite dev proxy so the frontend could call /
 - Generating, regenerating, and extending messages should cause a "generating..." pop up to temporarily appear while it waits.
 
 ## Character Management (Characters Tab)
+
 - The main content are should show a grid of cards, similar to the home tab, except these represent created characters.
 - The first grid item is also a "New Character" button, similar to the home tab.
 - Clicking the "New Character" or "Edit Character" buttons should bring you to that character's creation/settings page.
 
 ### Character Creation/Settings
+
 - Creating character personas will use a multi-step character creation process similar to https://secretdesires.ai/
 - During creation there should be an navbar on top that let's you easily jump to each creation step. Each step is labelled and displays "X/Y", where X is the current number of valid option groups, and Y is the total number of option groups that require validation.
 - Support a randomize-character button for debugging and fast testing.
@@ -86,17 +92,21 @@ For development, I previously used a Vite dev proxy so the frontend could call /
 - Navigation buttons should be anchored to the top of the window rather than the creation step pages, so the user doesn't have to scroll to the top of the screen each time they want to navigate.
 
 ## User Profiles Management (User Tab)
+
 - The User Profiles screen is practically identical to the character management screen.
 - This tab allows the user to create characters that will represent themselves in chats.
 
 ### User Profile Creation/Settings
+
 - Basically the same as character creation, just replacing "Character" with "User Persona" where applicable.
 
 ## Image Generation Tab
+
 - In this tab it lets you select a Chat, Character, or User Persona to create an image for.
-- Selecting an item brings you to its Image Generation Settings 
+- Selecting an item brings you to its Image Generation Settings
 
 ### Image Generation Settings.
+
 - Here it shows you a small gallery of all the other images you've already created for the current item.
 - It shows the character's/user persona's summary.
 - It shows several optional dropdown menus for pose/action, outfit, facial expression, scenery/setting, and other typical detail categories.
@@ -104,8 +114,10 @@ For development, I previously used a Vite dev proxy so the frontend could call /
 - A large "Generate" button at the bottom will combine character summary information, selected image options, and the user's custom text, and send it off to be generated.
 - After clicking generate and waiting for it to finish, the new image will be displayed.
 - You're then given the option to save the image, make the image the primary portrait shown in the main tabs, regenerate the image using the same prompt, or go back to the prompt settings to try again without saving the image.
+- Uses https://pixai.art/en/generator/image, or https://perchance.org/ai-text-to-image-generator to create images.
 
 ## Settings Tab
+
 - API Keys
 - LM Studio endpoint configurable
 - storage location
@@ -113,19 +125,20 @@ For development, I previously used a Vite dev proxy so the frontend could call /
 ---
 
 # Answers to questions ChatGPT asked when given this readme:
+
 1. Are you planning to package with Electron, Tauri, PyWebView, or start as a local web app?
-    - Electron
+   - Electron
 2. Do you want chat history to support branches/alternate regenerations, or only one linear timeline?
-    - One linear timeline
+   - One linear timeline
 3. Will user personas and characters share the same schema, or will user personas hide some character-only fields?
-    - I don't intend to have any character-only or user-only fields, but let's use some dummy fields and build it as if we will have differences.
+   - I don't intend to have any character-only or user-only fields, but let's use some dummy fields and build it as if we will have differences.
 4. Should character creation options be moddable by editing JSON/config files?
-    - Maybe... Not sure yet.
+   - Maybe... Not sure yet.
 5. Do you want streaming responses from LM Studio immediately, or is non-streaming fine for the first prototype?
-    - Non-streaming is fine for now.
+   - Non-streaming is fine for now.
 6. Should images be stored inside the app data folder, or should users choose a media library location?
-    - App data folder is fine
+   - App data folder is fine
 7. Is this app intended to support adult roleplay? If yes, enforce adult-only validation in the schema from the start.
-    - Yes, we will hardcode the age slider to go 18-100
+   - Yes, we will hardcode the age slider to go 18-100
 8. Do you want multi-character chats to produce one combined assistant response, or separate turns per character?
-    - One combined response
+   - One combined response
