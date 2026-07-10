@@ -7,21 +7,25 @@ const defaultImage =
 export const genderFemaleOption: Option = {
   id: "gender_female",
   displayText: "Female",
+  imageUrl: "options/gender_female.png",
 };
 
 export const genderMaleOption: Option = {
   id: "gender_male",
   displayText: "Male",
+  imageUrl: "options/gender_male.png",
 };
 
 export const genderFutanariOption: Option = {
   id: "gender_futanari",
   displayText: "Futanari",
+  imageUrl: "options/gender_futanari.png",
 };
 
 export const genderAndrogynousOption: Option = {
   id: "gender_androgynous",
   displayText: "Androgynous",
+  imageUrl: "options/gender_androgynous.png",
 };
 
 export const genderOptionGroup = {
@@ -424,6 +428,7 @@ export const bodyTypeOptionGroup: OptionGroup = {
 export const breastSizeNoneOption: Option = {
   id: "breast_size_none",
   displayText: "No Breasts",
+  imageUrl: defaultImage,
 };
 
 export const breastSizeOptionGroup: OptionGroup = {
@@ -488,6 +493,7 @@ export const breastSizeOptionGroup: OptionGroup = {
 export const cockSizeNoneOption: Option = {
   id: "cock_size_none",
   displayText: "No Cock",
+  imageUrl: defaultImage,
 };
 
 export const cockSizeOptionGroup: OptionGroup = {
@@ -878,6 +884,21 @@ export const allOptionGroups = {
   occupationOptionGroup,
   hobbiesOptionGroup,
   kinksOptionGroup,
+  outfitOptionGroup,
+  featuresOptionGroup,
+};
+
+export const visualOptionGroups = {
+  genderOptionGroup,
+  artstyleOptionGroup,
+  raceOptionGroup,
+  eyesOptionGroup,
+  hairstyleOptionGroup,
+  hairColorOptionGroup,
+  bodyTypeOptionGroup,
+  breastSizeOptionGroup,
+  cockSizeOptionGroup,
+  buttSizeOptionGroup,
   outfitOptionGroup,
   featuresOptionGroup,
 };

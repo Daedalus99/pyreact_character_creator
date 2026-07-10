@@ -2,7 +2,11 @@ import { useRef, useState } from "react";
 import OptionGroupSelector from "./OptionGroupSelector";
 import { characterCreationSteps } from "../../data/characterCreationSteps";
 import { createRandomCharacterDraft } from "../../utils/characterRandomizer";
-import { isGroupSelectionValid } from "../../utils/characterCreationRules";
+import {
+  isGroupSelectionValid,
+  getResolvedOptionGroup,
+  sanitizeDraftSelections,
+} from "../../utils/characterCreationRules";
 const iconUrlDice = "/icons/icon_dice.svg";
 
 export default function CharacterWizard({ onChangePage }) {
@@ -37,36 +41,81 @@ export default function CharacterWizard({ onChangePage }) {
   }
 
   function updateGroupSelection(groupId, nextSelected) {
-    setDraft((previousDraft) => ({
-      ...previousDraft,
-      selectedOptionIdsByGroup: {
-        ...previousDraft.selectedOptionIdsByGroup,
-        [groupId]: nextSelected,
-      },
-    }));
+    setDraft((previousDraft) => {
+      const nextDraft = {
+        ...previousDraft,
+        selectedOptionIdsByGroup: {
+          ...previousDraft.selectedOptionIdsByGroup,
+          [groupId]: nextSelected,
+        },
+      };
+
+      return sanitizeDraftSelections(nextDraft, characterCreationSteps);
+    });
   }
 
-  function isBasicInfoValid() {
-    return draft.name.trim().length > 0 && draft.age >= 18 && draft.age <= 100;
+  function isBasicInfoValid(draftToValidate = draft) {
+    return (
+      draftToValidate.name.trim().length > 0 &&
+      draftToValidate.age >= 18 &&
+      draftToValidate.age <= 100
+    );
   }
 
-  function isStepValid(step) {
+  function isStepValid(step, draftToValidate = draft) {
     if (step.id === "basic-info") {
-      return isBasicInfoValid();
+      return isBasicInfoValid(draftToValidate);
     }
 
-    return step.optionGroups.every((group) =>
-      isGroupSelectionValid(group, draft.selectedOptionIdsByGroup[group.id]),
-    );
+    return step.optionGroups
+      .map((group) => getResolvedOptionGroup(group, draftToValidate))
+      .filter((group) => group.visible)
+      .every((group) =>
+        isGroupSelectionValid(
+          group,
+          draftToValidate.selectedOptionIdsByGroup[group.id],
+        ),
+      );
   }
 
   function isCharacterDraftValid() {
     return characterCreationSteps.every((step) => isStepValid(step));
   }
 
+  function sanitizeDraftForVisibleGroups(draftToSanitize) {
+    const visibleGroupIds = new Set();
+
+    characterCreationSteps.forEach((step) => {
+      step.optionGroups
+        .map((group) => getResolvedOptionGroup(group, draftToSanitize))
+        .filter((group) => group.visible)
+        .forEach((group) => visibleGroupIds.add(group.id));
+    });
+
+    const nextSelectedOptionIdsByGroup = {};
+
+    Object.entries(draftToSanitize.selectedOptionIdsByGroup).forEach(
+      ([groupId, selected]) => {
+        if (visibleGroupIds.has(groupId)) {
+          nextSelectedOptionIdsByGroup[groupId] = selected;
+        }
+      },
+    );
+
+    return {
+      ...draftToSanitize,
+      selectedOptionIdsByGroup: nextSelectedOptionIdsByGroup,
+    };
+  }
+
   function finishCharacterCreation() {
+    const sanitizedDraft = sanitizeDraftSelections(
+      draft,
+      characterCreationSteps,
+    );
+
     const invalidSteps = characterCreationSteps.filter(
-      (step) => !isStepValid(step),
+      (step) => !isStepValid(step, sanitizedDraft),
     );
 
     if (invalidSteps.length > 0) {
@@ -77,11 +126,13 @@ export default function CharacterWizard({ onChangePage }) {
       return;
     }
 
-    console.log("Finished character draft:", draft);
-
-    // Temporary behavior for now.
+    console.log("Finished character draft:", sanitizedDraft);
     onChangePage("characters");
   }
+
+  const visibleOptionGroups = currentStep.optionGroups
+    .map((group) => getResolvedOptionGroup(group, draft))
+    .filter((group) => group.visible);
 
   return (
     <div className="character-wizard-layout">
@@ -210,8 +261,8 @@ export default function CharacterWizard({ onChangePage }) {
             </div>
           )}
 
-          {currentStep.optionGroups.length > 0 ? (
-            currentStep.optionGroups.map((group, index) => (
+          {visibleOptionGroups.length > 0 ? (
+            visibleOptionGroups.map((group, index) => (
               <div
                 className="option-group-section"
                 key={group.id || group.title}
@@ -227,7 +278,7 @@ export default function CharacterWizard({ onChangePage }) {
                   }
                 />
 
-                {index < currentStep.optionGroups.length - 1 && (
+                {index < visibleOptionGroups.length - 1 && (
                   <hr className="option-group-divider" />
                 )}
               </div>

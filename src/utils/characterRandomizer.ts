@@ -7,6 +7,7 @@ import type {
 import {
   getOptionValue,
   getResolvedSelectionRules,
+  getResolvedOptionGroup,
 } from "./characterCreationRules";
 
 const RANDOM_UNLIMITED_MAX = 4;
@@ -69,20 +70,25 @@ function randomizeGroupSelection(group: OptionGroup): string | string[] | null {
 export function createRandomCharacterDraft(
   characterCreationSteps: CreationStep[] = [],
 ): CharacterDraft {
-  const selectedOptionIdsByGroup: CharacterDraft["selectedOptionIdsByGroup"] =
-    {};
-
-  characterCreationSteps.forEach((step) => {
-    step.optionGroups?.forEach((group) => {
-      selectedOptionIdsByGroup[group.id] = randomizeGroupSelection(group);
-    });
-  });
-
-  return {
+  const draft: CharacterDraft = {
     name: `Random Character ${randomIntInclusive(100, 999)}`,
     age: randomIntInclusive(18, 100),
-    selectedOptionIdsByGroup,
+    selectedOptionIdsByGroup: {},
     customTextByGroup: {},
     loreEntries: [],
   };
+
+  characterCreationSteps.forEach((step) => {
+    step.optionGroups?.forEach((baseGroup) => {
+      const group = getResolvedOptionGroup(baseGroup, draft);
+
+      if (!group.visible) {
+        return;
+      }
+
+      draft.selectedOptionIdsByGroup[group.id] = randomizeGroupSelection(group);
+    });
+  });
+
+  return draft;
 }
