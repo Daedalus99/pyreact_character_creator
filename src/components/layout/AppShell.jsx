@@ -21,21 +21,45 @@ const pageComponents = {
 
 export default function AppShell() {
   const [activePage, setActivePage] = useState("chats");
+  const [navigationBlocker, setNavigationBlocker] = useState(null);
 
   const ActivePage = useMemo(
     () => pageComponents[activePage] ?? ChatsPage,
     [activePage],
   );
 
+  function requestPageChange(nextPage, options = {}) {
+    if (nextPage === activePage) {
+      return;
+    }
+
+    if (!options.force && navigationBlocker?.shouldBlock?.()) {
+      const shouldLeave = window.confirm(
+        navigationBlocker.message ?? "You have unsaved changes. Leave anyway?",
+      );
+
+      if (!shouldLeave) {
+        return;
+      }
+    }
+
+    setNavigationBlocker(null);
+    setActivePage(nextPage);
+  }
+
   return (
     <div className="app-shell">
-      <Sidebar activePage={activePage} onChangePage={setActivePage} />
+      <Sidebar activePage={activePage} onChangePage={requestPageChange} />
 
       <main className="app-content">
-        <ActivePage activePage={activePage} onChangePage={setActivePage} />
+        <ActivePage
+          activePage={activePage}
+          onChangePage={requestPageChange}
+          setNavigationBlocker={setNavigationBlocker}
+        />{" "}
       </main>
 
-      <FooterMenu activePage={activePage} onChangePage={setActivePage} />
+      <FooterMenu activePage={activePage} onChangePage={requestPageChange} />
     </div>
   );
 }

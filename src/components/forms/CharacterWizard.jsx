@@ -14,7 +14,10 @@ import { useAppData } from "../../state/AppDataContext";
 
 const iconUrlDice = "/icons/icon_dice.svg";
 
-export default function CharacterWizard({ onChangePage }) {
+export default function CharacterWizard({
+  onChangePage,
+  setNavigationBlocker,
+}) {
   const { characters } = useAppData();
   const editingCharacter = characters.editingEntity;
 
@@ -28,6 +31,23 @@ export default function CharacterWizard({ onChangePage }) {
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const mainTopRef = useRef(null);
+
+  const hasUnsavedChanges =
+    draft.name.trim().length > 0 ||
+    Object.keys(draft.selectedOptionIdsByGroup).length > 0 ||
+    draft.age !== 30;
+
+  useEffect(() => {
+    setNavigationBlocker?.({
+      shouldBlock: () => hasUnsavedChanges,
+      message: "You have unsaved character changes. Leave without saving?",
+    });
+
+    return () => {
+      setNavigationBlocker?.(null);
+    };
+  }, [setNavigationBlocker, hasUnsavedChanges]);
+
   function changeStep(index) {
     setCurrentStepIndex(index);
 
@@ -118,7 +138,7 @@ export default function CharacterWizard({ onChangePage }) {
     };
 
     characters.saveEntity(character);
-    onChangePage("characters");
+    onChangePage("characters", { force: true });
   }
 
   const visibleOptionGroups = currentStep.optionGroups
