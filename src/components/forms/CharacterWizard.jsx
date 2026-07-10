@@ -9,7 +9,7 @@ import {
 } from "../../utils/characterCreationRules";
 const iconUrlDice = "/icons/icon_dice.svg";
 
-export default function CharacterWizard({ onChangePage }) {
+export default function CharacterWizard({ onChangePage, onCreateCharacter }) {
   const [draft, setDraft] = useState({
     name: "",
     age: 30,
@@ -126,7 +126,16 @@ export default function CharacterWizard({ onChangePage }) {
       return;
     }
 
-    console.log("Finished character draft:", sanitizedDraft);
+    const character = {
+      id: crypto.randomUUID(),
+      label: sanitizedDraft.name,
+      subtitle: `Age ${sanitizedDraft.age}`,
+      draft: sanitizedDraft,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    onCreateCharacter(character);
     onChangePage("characters");
   }
 
