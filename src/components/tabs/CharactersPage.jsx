@@ -1,9 +1,15 @@
 import BasePage from "./BasePage";
 import EntityCard from "../cards/EntityCard";
 import { useAppData } from "../../state/AppDataContext";
+import { useEntityDeleteConfirmation } from "../../hooks/useEntityDeleteConfirmation";
 
 export default function CharactersPage({ onChangePage }) {
   const { characters } = useAppData();
+
+  const requestDeleteCharacter = useEntityDeleteConfirmation({
+    entityTypeLabel: "character",
+    collection: characters,
+  });
 
   function startNewCharacter() {
     characters.startNewEntity();
@@ -35,7 +41,7 @@ export default function CharactersPage({ onChangePage }) {
             subtitle={character.subtitle}
             onClick={() => startEditCharacter(character.id)}
             onEdit={() => startEditCharacter(character.id)}
-            onDelete={() => characters.deleteEntity(character.id)}
+            onDelete={() => requestDeleteCharacter(character)}
           />
         ))}
       </div>

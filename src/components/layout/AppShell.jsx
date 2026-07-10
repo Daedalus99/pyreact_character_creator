@@ -9,6 +9,7 @@ import ProfilesPage from "../tabs/ProfilesPage";
 import ImageGenerationPage from "../tabs/ImageGenerationPage";
 import SettingsPage from "../tabs/SettingsPage";
 import CharacterWizard from "../forms/CharacterWizard";
+import { useConfirmDialog } from "../../state/ConfirmDialogContext";
 
 const pageComponents = {
   chats: ChatsPage,
@@ -22,21 +23,28 @@ const pageComponents = {
 export default function AppShell() {
   const [activePage, setActivePage] = useState("chats");
   const [navigationBlocker, setNavigationBlocker] = useState(null);
+  const confirm = useConfirmDialog();
 
   const ActivePage = useMemo(
     () => pageComponents[activePage] ?? ChatsPage,
     [activePage],
   );
 
-  function requestPageChange(nextPage, options = {}) {
+  async function requestPageChange(nextPage, options = {}) {
     if (nextPage === activePage) {
       return;
     }
 
     if (!options.force && navigationBlocker?.shouldBlock?.()) {
-      const shouldLeave = window.confirm(
-        navigationBlocker.message ?? "You have unsaved changes. Leave anyway?",
-      );
+      const shouldLeave = await confirm({
+        title: "Leave this page?",
+        message:
+          navigationBlocker.message ??
+          "You have unsaved changes. Leave without saving?",
+        confirmLabel: "Leave",
+        cancelLabel: "Stay",
+        variant: "danger",
+      });
 
       if (!shouldLeave) {
         return;
