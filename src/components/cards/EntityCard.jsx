@@ -22,7 +22,12 @@ export default function EntityCard({
         aria-label={isNew ? "Add new item" : `Open ${label}`}
       >
         <div className="card-thumbnail">
-          <img className="card-thumbnail-icon" src={thumbnailIconUrl} alt="" />
+          <img
+            className="card-thumbnail-icon"
+            src={thumbnailIconUrl}
+            alt={isNew ? "Add new item" : ""}
+            draggable={false}
+          />{" "}
         </div>
 
         <div className="card-details">
@@ -34,14 +39,21 @@ export default function EntityCard({
       {!isNew && (
         <div className="card-actions">
           <IconButton
-            iconUrl="/icons/chat_icon_edit.svg"
             ariaLabel={`Edit ${label}`}
-            onClick={onEdit}
+            iconUrl="/icons/chat_icon_edit.svg"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit?.();
+            }}
           />
+
           <IconButton
-            iconUrl="/icons/chat_icon_delete.svg"
             ariaLabel={`Delete ${label}`}
-            onClick={onDelete}
+            iconUrl="/icons/chat_icon_delete.svg"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete?.();
+            }}
           />
         </div>
       )}

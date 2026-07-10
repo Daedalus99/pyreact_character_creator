@@ -14,28 +14,49 @@ import { useAppData } from "../../state/AppDataContext";
 
 const iconUrlDice = "/icons/icon_dice.svg";
 
+function cloneDraft(draft) {
+  return JSON.parse(JSON.stringify(draft));
+}
+
+function getDraftSignature(draft) {
+  return JSON.stringify(draft);
+}
+
 export default function CharacterWizard({
   onChangePage,
   setNavigationBlocker,
 }) {
   const { characters } = useAppData();
   const editingCharacter = characters.editingEntity;
-
-  const [draft, setDraft] = useState(() => {
-    return editingCharacter?.draft ?? blankDraft;
-  });
-
-  useEffect(() => {
-    setDraft(editingCharacter?.draft ?? blankDraft);
-  }, [editingCharacter?.id]);
+  const isEditingCharacter = Boolean(editingCharacter);
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const mainTopRef = useRef(null);
 
+  const [initialDraft, setInitialDraft] = useState(() =>
+    cloneDraft(editingCharacter?.draft ?? blankDraft),
+  );
+
+  const [draft, setDraft] = useState(() =>
+    cloneDraft(editingCharacter?.draft ?? blankDraft),
+  );
+
+  useEffect(() => {
+    const nextDraft = cloneDraft(editingCharacter?.draft ?? blankDraft);
+
+    setInitialDraft(nextDraft);
+    setDraft(nextDraft);
+    setCurrentStepIndex(0);
+  }, [editingCharacter?.id]);
+
   const hasUnsavedChanges =
-    draft.name.trim().length > 0 ||
-    Object.keys(draft.selectedOptionIdsByGroup).length > 0 ||
-    draft.age !== 30;
+    getDraftSignature(draft) !== getDraftSignature(initialDraft);
+
+  const wizardTitle = isEditingCharacter
+    ? "Edit Character"
+    : "Create Character";
+
+  const finishButtonLabel = isEditingCharacter ? "Save Changes" : "Finish";
 
   useEffect(() => {
     setNavigationBlocker?.({
@@ -47,6 +68,8 @@ export default function CharacterWizard({
       setNavigationBlocker?.(null);
     };
   }, [setNavigationBlocker, hasUnsavedChanges]);
+
+  const showDebugControls = import.meta.env.DEV;
 
   function changeStep(index) {
     setCurrentStepIndex(index);
@@ -199,35 +222,36 @@ export default function CharacterWizard({
             Cancel
           </button>
         </div>
-        <button
-          type="button"
-          className="log-draft-button"
-          onClick={() => {
-            console.log("Draft:", draft);
-            console.log(
-              "Step validity:",
-              characterCreationSteps.map((step) => ({
-                step: step.title,
-                valid: isStepValid(step),
-              })),
-            );
-          }}
-        >
-          Log Draft
-        </button>
+        {showDebugControls && (
+          <button
+            type="button"
+            onClick={() => {
+              console.log("Draft:", draft);
+              console.log(
+                "Step validity:",
+                characterCreationSteps.map((step) => ({
+                  step: step.title,
+                  valid: isStepValid(step),
+                })),
+              );
+            }}
+          >
+            Log Draft
+          </button>
+        )}
         <button
           type="button"
           className="primary-button"
           disabled={!isCharacterDraftValid()}
           onClick={finishCharacterCreation}
         >
-          Finish
+          {finishButtonLabel}
         </button>
       </aside>
 
       <main className="character-wizard-main">
         <header ref={mainTopRef} className="character-wizard-header">
-          <h1>Create Character</h1>
+          <h1>{wizardTitle}</h1>
           <p>Build a persona with name, appearance, traits, and backstory.</p>
         </header>
 
