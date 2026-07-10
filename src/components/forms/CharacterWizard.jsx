@@ -1,22 +1,30 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import OptionGroupSelector from "./OptionGroupSelector";
-import { characterCreationSteps } from "../../data/characterCreationSteps";
+import {
+  characterCreationSteps,
+  blankDraft,
+} from "../../data/characterCreationSteps";
 import { createRandomCharacterDraft } from "../../utils/characterRandomizer";
 import {
   isGroupSelectionValid,
   getResolvedOptionGroup,
   sanitizeDraftSelections,
 } from "../../utils/characterCreationRules";
+import { useAppData } from "../../state/AppDataContext";
+
 const iconUrlDice = "/icons/icon_dice.svg";
 
 export default function CharacterWizard({ onChangePage, onCreateCharacter }) {
-  const [draft, setDraft] = useState({
-    name: "",
-    age: 30,
-    selectedOptionIdsByGroup: {},
-    customTextByGroup: {},
-    loreEntries: [],
+  const { characters } = useAppData();
+  const editingCharacter = characters.editingEntity;
+
+  const [draft, setDraft] = useState(() => {
+    return editingCharacter?.draft ?? blankDraft;
   });
+
+  useEffect(() => {
+    setDraft(editingCharacter?.draft ?? blankDraft);
+  }, [editingCharacter?.id]);
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const mainTopRef = useRef(null);
@@ -127,15 +135,15 @@ export default function CharacterWizard({ onChangePage, onCreateCharacter }) {
     }
 
     const character = {
-      id: crypto.randomUUID(),
+      id: editingCharacter?.id ?? crypto.randomUUID(),
       label: sanitizedDraft.name,
       subtitle: `Age ${sanitizedDraft.age}`,
       draft: sanitizedDraft,
-      createdAt: new Date().toISOString(),
+      createdAt: editingCharacter?.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    onCreateCharacter(character);
+    characters.saveEntity(character);
     onChangePage("characters");
   }
 

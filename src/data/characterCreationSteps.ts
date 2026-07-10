@@ -1,15 +1,26 @@
 import { allOptionGroups } from "./characterCreationOptionGroups";
-import type { CreationStep } from "../types/characterCreationTypes";
+import type {
+  CreationStep,
+  CharacterDraft,
+} from "../types/characterCreationTypes";
+
+export const blankDraft: CharacterDraft = {
+  name: "",
+  age: 30,
+  selectedOptionIdsByGroup: {},
+  customTextByGroup: {},
+  loreEntries: [],
+};
 
 export const creationStepBasic: CreationStep = {
   id: "basic-info",
-    title: "Basic Info",
-    showBackButton: true,
-    nextButtonText: "Next",
-    optionGroups: [ 
-      allOptionGroups.genderOptionGroup,
-      allOptionGroups.artstyleOptionGroup
-    ]
+  title: "Basic Info",
+  showBackButton: true,
+  nextButtonText: "Next",
+  optionGroups: [
+    allOptionGroups.genderOptionGroup,
+    allOptionGroups.artstyleOptionGroup,
+  ],
 };
 
 export const creationStepFace: CreationStep = {
@@ -19,8 +30,8 @@ export const creationStepFace: CreationStep = {
   nextButtonText: "Next",
   optionGroups: [
     allOptionGroups.raceOptionGroup,
-    allOptionGroups.eyesOptionGroup
-  ]
+    allOptionGroups.eyesOptionGroup,
+  ],
 };
 
 export const creationStepHair: CreationStep = {
@@ -30,8 +41,8 @@ export const creationStepHair: CreationStep = {
   nextButtonText: "Next",
   optionGroups: [
     allOptionGroups.hairColorOptionGroup,
-    allOptionGroups.hairstyleOptionGroup
-  ]
+    allOptionGroups.hairstyleOptionGroup,
+  ],
 };
 
 export const creationStepPhysique: CreationStep = {
@@ -43,8 +54,8 @@ export const creationStepPhysique: CreationStep = {
     allOptionGroups.bodyTypeOptionGroup,
     allOptionGroups.breastSizeOptionGroup,
     allOptionGroups.cockSizeOptionGroup,
-    allOptionGroups.buttSizeOptionGroup
-  ]
+    allOptionGroups.buttSizeOptionGroup,
+  ],
 };
 
 export const creationStepTraits: CreationStep = {
@@ -55,7 +66,7 @@ export const creationStepTraits: CreationStep = {
   optionGroups: [
     allOptionGroups.personalityOptionGroup,
     allOptionGroups.relationshipOptionGroup,
-  ]
+  ],
 };
 
 export const creationStepLifestyle: CreationStep = {
@@ -66,8 +77,8 @@ export const creationStepLifestyle: CreationStep = {
   optionGroups: [
     allOptionGroups.occupationOptionGroup,
     allOptionGroups.hobbiesOptionGroup,
-    allOptionGroups.kinksOptionGroup
-  ]
+    allOptionGroups.kinksOptionGroup,
+  ],
 };
 
 export const creationStepAttire: CreationStep = {
@@ -78,7 +89,7 @@ export const creationStepAttire: CreationStep = {
   optionGroups: [
     allOptionGroups.outfitOptionGroup,
     allOptionGroups.featuresOptionGroup,
-  ]
+  ],
 };
 
 export const creationStepLore: CreationStep = {

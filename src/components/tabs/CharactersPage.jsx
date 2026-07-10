@@ -1,32 +1,44 @@
-// CharactersPage shows the character collection and new character action.
 import BasePage from "./BasePage";
-import CardGrid from "../panels/CardGrid";
 import EntityCard from "../cards/EntityCard";
+import { useAppData } from "../../state/AppDataContext";
 
-export default function CharactersPage({ characters = [], onChangePage }) {
+export default function CharactersPage({ onChangePage }) {
+  const { characters } = useAppData();
+
+  function startNewCharacter() {
+    characters.startNewEntity();
+    onChangePage("character-wizard");
+  }
+
+  function startEditCharacter(characterId) {
+    characters.startEditEntity(characterId);
+    onChangePage("character-wizard");
+  }
+
   return (
     <BasePage
       title="Characters"
-      description="Create and edit character personas for roleplay."
+      description="Create and manage roleplay characters."
     >
-      <CardGrid>
+      <div className="card-grid">
         <EntityCard
           isNew
           label="New Character"
-          onOpen={() => onChangePage("character-wizard")}
-          onEdit={() => onChangePage("character-wizard")}
+          subtitle="Create a new character"
+          onClick={startNewCharacter}
         />
 
-        {characters.map((character) => (
+        {characters.entities.map((character) => (
           <EntityCard
             key={character.id}
             label={character.label}
             subtitle={character.subtitle}
-            onOpen={() => onChangePage("character-wizard")}
-            onEdit={() => onChangePage("character-wizard")}
+            onClick={() => startEditCharacter(character.id)}
+            onEdit={() => startEditCharacter(character.id)}
+            onDelete={() => characters.deleteEntity(character.id)}
           />
         ))}
-      </CardGrid>
+      </div>
     </BasePage>
   );
 }

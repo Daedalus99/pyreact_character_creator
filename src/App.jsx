@@ -1,34 +1,13 @@
-import { useState } from "react";
-import AppShell from "./components/layout/AppShell";
 import Titlebar from "./components/layout/Titlebar";
+import AppShell from "./components/layout/AppShell";
+import { AppDataProvider } from "./state/AppDataContext";
 import "./styles/app.css";
 
-function App() {
-  const [activePage, setActivePage] = useState("chats");
-  const [chats, setChats] = useState([]);
-  const [characters, setCharacters] = useState([]);
-  const [userPersonas, setUserPersonas] = useState([]);
-
+export default function App() {
   return (
-    <>
+    <AppDataProvider>
       <Titlebar />
-      <AppShell
-        activePage={activePage}
-        onChangePage={setActivePage}
-        characters={characters}
-        onCreateCharacter={(character) => {
-          setCharacters((previousCharacters) => [
-            ...previousCharacters,
-            character,
-          ]);
-        }}
-        chats={chats}
-        setChats={setChats}
-        userPersonas={userPersonas}
-        setUserPersonas={setUserPersonas}
-      />
-    </>
+      <AppShell />
+    </AppDataProvider>
   );
 }
-
-export default App;

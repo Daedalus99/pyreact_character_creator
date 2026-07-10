@@ -1,6 +1,6 @@
 // AppShell is the top-level layout for the desktop app.
 // It renders the sidebar, footer menu, and the selected page content.
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Sidebar from "./Sidebar";
 import FooterMenu from "./FooterMenu";
 import ChatsPage from "../tabs/ChatsPage";
@@ -19,19 +19,9 @@ const pageComponents = {
   "character-wizard": CharacterWizard,
 };
 
-export default function AppShell({
-  activePage,
-  onChangePage,
+export default function AppShell() {
+  const [activePage, setActivePage] = useState("chats");
 
-  characters,
-  onCreateCharacter,
-
-  chats,
-  setChats,
-
-  userPersonas,
-  setUserPersonas,
-}) {
   const ActivePage = useMemo(
     () => pageComponents[activePage] ?? ChatsPage,
     [activePage],
@@ -39,22 +29,13 @@ export default function AppShell({
 
   return (
     <div className="app-shell">
-      <Sidebar activePage={activePage} onChangePage={onChangePage} />
+      <Sidebar activePage={activePage} onChangePage={setActivePage} />
 
       <main className="app-content">
-        <ActivePage
-          activePage={activePage}
-          onChangePage={onChangePage}
-          characters={characters}
-          onCreateCharacter={onCreateCharacter}
-          chats={chats}
-          setChats={setChats}
-          userPersonas={userPersonas}
-          setUserPersonas={setUserPersonas}
-        />
+        <ActivePage activePage={activePage} onChangePage={setActivePage} />
       </main>
 
-      <FooterMenu activePage={activePage} onChangePage={onChangePage} />
+      <FooterMenu activePage={activePage} onChangePage={setActivePage} />
     </div>
   );
 }
