@@ -8,7 +8,6 @@ export default function EntityCard({
   label,
   subtitle,
   onClick,
-  onOpen,
   onEdit,
   onDelete,
 }) {

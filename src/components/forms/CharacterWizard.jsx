@@ -14,7 +14,7 @@ import { useAppData } from "../../state/AppDataContext";
 
 const iconUrlDice = "/icons/icon_dice.svg";
 
-export default function CharacterWizard({ onChangePage, onCreateCharacter }) {
+export default function CharacterWizard({ onChangePage }) {
   const { characters } = useAppData();
   const editingCharacter = characters.editingEntity;
 
@@ -88,32 +88,6 @@ export default function CharacterWizard({ onChangePage, onCreateCharacter }) {
 
   function isCharacterDraftValid() {
     return characterCreationSteps.every((step) => isStepValid(step));
-  }
-
-  function sanitizeDraftForVisibleGroups(draftToSanitize) {
-    const visibleGroupIds = new Set();
-
-    characterCreationSteps.forEach((step) => {
-      step.optionGroups
-        .map((group) => getResolvedOptionGroup(group, draftToSanitize))
-        .filter((group) => group.visible)
-        .forEach((group) => visibleGroupIds.add(group.id));
-    });
-
-    const nextSelectedOptionIdsByGroup = {};
-
-    Object.entries(draftToSanitize.selectedOptionIdsByGroup).forEach(
-      ([groupId, selected]) => {
-        if (visibleGroupIds.has(groupId)) {
-          nextSelectedOptionIdsByGroup[groupId] = selected;
-        }
-      },
-    );
-
-    return {
-      ...draftToSanitize,
-      selectedOptionIdsByGroup: nextSelectedOptionIdsByGroup,
-    };
   }
 
   function finishCharacterCreation() {

@@ -38,18 +38,12 @@ export default function OptionGroupSelector({
 
   const isSelectionValid = validityText === "valid";
 
-  const hasExplicitMaxSelectable =
-    group && Object.prototype.hasOwnProperty.call(group, "maxSelectable");
-
-  function getOptionValue(option, index) {
-    return option.id ?? option.value ?? option.label ?? String(index);
-  }
-
   function isSelected(value) {
     return rules.isMulti
       ? resolvedSelected.includes(value)
       : resolvedSelected === value;
   }
+
   function handleSelect(value) {
     let nextSelected;
 

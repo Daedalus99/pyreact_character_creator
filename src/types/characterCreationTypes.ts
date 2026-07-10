@@ -53,9 +53,6 @@ export type CreationStep = {
   id: string;
   title: string;
   optionGroups: OptionGroup[];
-
-  showBackButton?: boolean;
-  nextButtonText?: string;
 };
 
 export type CharacterDraft = {

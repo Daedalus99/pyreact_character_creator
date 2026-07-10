@@ -15,8 +15,6 @@ export const blankDraft: CharacterDraft = {
 export const creationStepBasic: CreationStep = {
   id: "basic-info",
   title: "Basic Info",
-  showBackButton: true,
-  nextButtonText: "Next",
   optionGroups: [
     allOptionGroups.genderOptionGroup,
     allOptionGroups.artstyleOptionGroup,
@@ -26,8 +24,6 @@ export const creationStepBasic: CreationStep = {
 export const creationStepFace: CreationStep = {
   id: "face",
   title: "Face",
-  showBackButton: true,
-  nextButtonText: "Next",
   optionGroups: [
     allOptionGroups.raceOptionGroup,
     allOptionGroups.eyesOptionGroup,
@@ -37,8 +33,6 @@ export const creationStepFace: CreationStep = {
 export const creationStepHair: CreationStep = {
   id: "hair",
   title: "Hair",
-  showBackButton: true,
-  nextButtonText: "Next",
   optionGroups: [
     allOptionGroups.hairColorOptionGroup,
     allOptionGroups.hairstyleOptionGroup,
@@ -48,8 +42,6 @@ export const creationStepHair: CreationStep = {
 export const creationStepPhysique: CreationStep = {
   id: "physique",
   title: "Physique",
-  showBackButton: true,
-  nextButtonText: "Next",
   optionGroups: [
     allOptionGroups.bodyTypeOptionGroup,
     allOptionGroups.breastSizeOptionGroup,
@@ -61,8 +53,6 @@ export const creationStepPhysique: CreationStep = {
 export const creationStepTraits: CreationStep = {
   id: "traits",
   title: "Traits",
-  showBackButton: true,
-  nextButtonText: "Next",
   optionGroups: [
     allOptionGroups.personalityOptionGroup,
     allOptionGroups.relationshipOptionGroup,
@@ -72,8 +62,6 @@ export const creationStepTraits: CreationStep = {
 export const creationStepLifestyle: CreationStep = {
   id: "lifestyle",
   title: "Lifestyle",
-  showBackButton: true,
-  nextButtonText: "Next",
   optionGroups: [
     allOptionGroups.occupationOptionGroup,
     allOptionGroups.hobbiesOptionGroup,
@@ -84,8 +72,6 @@ export const creationStepLifestyle: CreationStep = {
 export const creationStepAttire: CreationStep = {
   id: "attire",
   title: "Attire",
-  showBackButton: true,
-  nextButtonText: "Next",
   optionGroups: [
     allOptionGroups.outfitOptionGroup,
     allOptionGroups.featuresOptionGroup,
@@ -95,8 +81,6 @@ export const creationStepAttire: CreationStep = {
 export const creationStepLore: CreationStep = {
   id: "lore",
   title: "Lore",
-  showBackButton: true,
-  nextButtonText: "Next",
   optionGroups: [],
 };
 
