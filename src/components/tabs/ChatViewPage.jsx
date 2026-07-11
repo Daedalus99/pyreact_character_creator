@@ -116,6 +116,39 @@ export default function ChatViewPage({ onChangePage }) {
     onChangePage("chat-settings", { returnPage: "chat-view" });
   }
 
+  function updateMessage(messageId, content) {
+    saveChatMessages(
+      messages.map((message) =>
+        message.id === messageId
+          ? {
+              ...message,
+              content,
+              updatedAt: new Date().toISOString(),
+            }
+          : message,
+      ),
+    );
+  }
+
+  function extendMessage(message) {
+    console.log("Extend message:", message.id);
+  }
+
+  function regenerateMessage(message) {
+    console.log("Regenerate message:", message.id);
+  }
+
+  function cancelResponse(messageId) {
+    console.log("Cancel response:", messageId);
+  }
+
+  function requestAssistantResponse() {
+    console.log("Request assistant response for chat:", chat.id);
+  }
+
+  const lastMessage = messages[messages.length - 1] ?? null;
+  const canRequestAssistantResponse = lastMessage?.role === "user";
+
   return (
     <BasePage title={chat.label} description={chat.subtitle || "Roleplay chat"}>
       <section className="chat-view-layout">
@@ -184,8 +217,22 @@ export default function ChatViewPage({ onChangePage }) {
           <ChatMessageList
             messages={messages}
             onDeleteMessage={deleteMessage}
+            onUpdateMessage={updateMessage}
+            onExtendMessage={extendMessage}
+            onRegenerateMessage={regenerateMessage}
+            onCancelResponse={cancelResponse}
           />
-
+          {canRequestAssistantResponse && (
+            <div className="chat-response-request-row">
+              <button
+                type="button"
+                className="chat-response-request-button primary-button"
+                onClick={requestAssistantResponse}
+              >
+                Request Response
+              </button>
+            </div>
+          )}
           <ChatInput onSendMessage={sendUserMessage} />
         </main>
       </section>

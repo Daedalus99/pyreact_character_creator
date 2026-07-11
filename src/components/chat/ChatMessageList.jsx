@@ -1,6 +1,13 @@
 import ChatMessage from "./ChatMessage";
 
-export default function ChatMessageList({ messages, onDeleteMessage }) {
+export default function ChatMessageList({
+  messages,
+  onDeleteMessage,
+  onUpdateMessage,
+  onExtendMessage,
+  onRegenerateMessage,
+  onCancelResponse,
+}) {
   if (messages.length === 0) {
     return (
       <div className="chat-empty-state">
@@ -17,6 +24,10 @@ export default function ChatMessageList({ messages, onDeleteMessage }) {
           key={message.id}
           message={message}
           onDelete={onDeleteMessage}
+          onUpdateMessage={onUpdateMessage}
+          onExtendMessage={onExtendMessage}
+          onRegenerateMessage={onRegenerateMessage}
+          onCancelResponse={onCancelResponse}
         />
       ))}
     </div>
