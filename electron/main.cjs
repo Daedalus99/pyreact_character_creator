@@ -61,9 +61,9 @@ function createWindow() {
   });
 
   win.loadURL("http://127.0.0.1:5173");
-  if (!app.isPackaged) {
-    win.webContents.openDevTools({ mode: "detach" });
-  }
+  // if (!app.isPackaged) {
+  //   win.webContents.openDevTools({ mode: "detach" });
+  // }
 }
 
 app.whenReady().then(() => {
