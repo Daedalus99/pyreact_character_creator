@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import OptionGroupSelector from "./OptionGroupSelector";
 import {
   characterCreationSteps,
@@ -14,20 +14,24 @@ import { useAppData } from "../../state/AppDataContext";
 
 const iconUrlDice = "/icons/icon_dice.svg";
 
-const characterWizardConfig = {
+export const characterWizardConfig = {
   entityTypeLabel: "Character",
   entityTypeLabelPlural: "Characters",
   returnPage: "characters",
   collectionKey: "characters",
   pageDescription: "Create and manage AI-controlled roleplay characters.",
+  wizardDescription:
+    "Build an AI-controlled roleplay character with name, appearance, traits, and backstory.",
 };
 
-const userPersonaWizardConfig = {
+export const userPersonaWizardConfig = {
   entityTypeLabel: "User Persona",
   entityTypeLabelPlural: "User Personas",
   returnPage: "user",
   collectionKey: "userPersonas",
   pageDescription: "Create and manage the identities you roleplay as.",
+  wizardDescription:
+    "Build the identity you roleplay as, including name, appearance, traits, and backstory.",
 };
 
 function cloneDraft(draft) {
@@ -38,55 +42,76 @@ function getDraftSignature(draft) {
   return JSON.stringify(draft);
 }
 
-export default function PersonaWizard({ onChangePage, setNavigationBlocker }) {
-  const { characters } = useAppData();
-  const editingCharacter = characters.editingEntity;
-  const isEditingCharacter = Boolean(editingCharacter);
+function getEntityLabel(config) {
+  return config.entityTypeLabel ?? "Persona";
+}
+
+function getEntityLabelLower(config) {
+  return getEntityLabel(config).toLowerCase();
+}
+
+function getFreshDraft(editingEntity) {
+  return cloneDraft(editingEntity?.draft ?? blankDraft);
+}
+
+export default function PersonaWizard({
+  onChangePage,
+  setNavigationBlocker,
+  config = characterWizardConfig,
+}) {
+  const appData = useAppData();
+  const collection = appData[config.collectionKey];
+
+  if (!collection) {
+    throw new Error(
+      `PersonaWizard could not find collection "${config.collectionKey}" in AppDataContext.`,
+    );
+  }
+
+  const editingEntity = collection.editingEntity;
+  const isEditingEntity = Boolean(editingEntity);
+  const entityTypeLabel = getEntityLabel(config);
+  const entityTypeLabelLower = getEntityLabelLower(config);
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const mainTopRef = useRef(null);
 
   const [initialDraft, setInitialDraft] = useState(() =>
-    cloneDraft(editingCharacter?.draft ?? blankDraft),
+    getFreshDraft(editingEntity),
   );
 
-  const [draft, setDraft] = useState(() =>
-    cloneDraft(editingCharacter?.draft ?? blankDraft),
-  );
+  const [draft, setDraft] = useState(() => getFreshDraft(editingEntity));
 
   useEffect(() => {
-    const nextDraft = cloneDraft(editingCharacter?.draft ?? blankDraft);
+    const nextDraft = getFreshDraft(editingEntity);
 
     setInitialDraft(nextDraft);
     setDraft(nextDraft);
     setCurrentStepIndex(0);
-  }, [editingCharacter?.id]);
+  }, [config.collectionKey, editingEntity?.id]);
 
   const hasUnsavedChanges =
     getDraftSignature(draft) !== getDraftSignature(initialDraft);
 
-  const wizardTitle = isEditingCharacter
-    ? "Edit Character"
-    : "Create Character";
+  const wizardTitle = isEditingEntity
+    ? `Edit ${entityTypeLabel}`
+    : `Create ${entityTypeLabel}`;
 
-  const finishButtonLabel = isEditingCharacter ? "Save Changes" : "Finish";
+  const finishButtonLabel = isEditingEntity ? "Save Changes" : "Finish";
+  const showDebugControls = import.meta.env.DEV;
 
   useEffect(() => {
     setNavigationBlocker?.({
       shouldBlock: () => hasUnsavedChanges,
-      message: "You have unsaved character changes. Leave without saving?",
+      message: `You have unsaved ${entityTypeLabelLower} changes. Leave without saving?`,
     });
 
     return () => {
       setNavigationBlocker?.(null);
     };
-  }, [setNavigationBlocker, hasUnsavedChanges]);
+  }, [entityTypeLabelLower, hasUnsavedChanges, setNavigationBlocker]);
 
-  const showDebugControls = import.meta.env.DEV;
-
-  function changeStep(index) {
-    setCurrentStepIndex(index);
-
+  function scrollToWizardTop() {
     requestAnimationFrame(() => {
       mainTopRef.current?.scrollIntoView({
         behavior: "auto",
@@ -94,13 +119,17 @@ export default function PersonaWizard({ onChangePage, setNavigationBlocker }) {
       });
     });
   }
-  const currentStep = characterCreationSteps[currentStepIndex];
 
-  function cancelCharacterCreation() {
-    onChangePage("characters");
+  function changeStep(index) {
+    setCurrentStepIndex(index);
+    scrollToWizardTop();
   }
 
-  function randomizeCharacter() {
+  function cancelPersonaCreation() {
+    onChangePage(config.returnPage);
+  }
+
+  function randomizePersona() {
     setDraft(createRandomCharacterDraft(characterCreationSteps));
   }
 
@@ -116,6 +145,25 @@ export default function PersonaWizard({ onChangePage, setNavigationBlocker }) {
 
       return sanitizeDraftSelections(nextDraft, characterCreationSteps);
     });
+  }
+
+  function updateDraftField(fieldName, nextValue) {
+    setDraft((previousDraft) => ({
+      ...previousDraft,
+      [fieldName]: nextValue,
+    }));
+  }
+
+  function getSanitizedDraft(draftToSanitize = draft) {
+    const sanitizedDraft = sanitizeDraftSelections(
+      draftToSanitize,
+      characterCreationSteps,
+    );
+
+    return {
+      ...sanitizedDraft,
+      name: sanitizedDraft.name.trim(),
+    };
   }
 
   function isBasicInfoValid(draftToValidate = draft) {
@@ -142,55 +190,84 @@ export default function PersonaWizard({ onChangePage, setNavigationBlocker }) {
       );
   }
 
-  function isCharacterDraftValid() {
-    return characterCreationSteps.every((step) => isStepValid(step));
+  function isPersonaDraftValid(draftToValidate = draft) {
+    return characterCreationSteps.every((step) =>
+      isStepValid(step, draftToValidate),
+    );
   }
 
-  function finishCharacterCreation() {
-    const sanitizedDraft = sanitizeDraftSelections(
-      draft,
-      characterCreationSteps,
-    );
-
-    const invalidSteps = characterCreationSteps.filter(
+  function goToFirstInvalidStep(sanitizedDraft) {
+    const firstInvalidStepIndex = characterCreationSteps.findIndex(
       (step) => !isStepValid(step, sanitizedDraft),
     );
 
-    if (invalidSteps.length > 0) {
-      console.log(
-        "Cannot finish. Invalid steps:",
-        invalidSteps.map((step) => step.title),
-      );
+    if (firstInvalidStepIndex >= 0) {
+      changeStep(firstInvalidStepIndex);
+    }
+
+    return firstInvalidStepIndex;
+  }
+
+  function finishPersonaCreation() {
+    const sanitizedDraft = getSanitizedDraft();
+
+    if (!isPersonaDraftValid(sanitizedDraft)) {
+      const firstInvalidStepIndex = goToFirstInvalidStep(sanitizedDraft);
+
+      if (showDebugControls) {
+        console.log(
+          "Cannot finish. Invalid steps:",
+          characterCreationSteps
+            .filter((step) => !isStepValid(step, sanitizedDraft))
+            .map((step) => step.title),
+          "First invalid step index:",
+          firstInvalidStepIndex,
+        );
+      }
+
       return;
     }
 
-    const character = {
-      id: editingCharacter?.id ?? crypto.randomUUID(),
+    const now = new Date().toISOString();
+
+    const entity = {
+      id: editingEntity?.id ?? crypto.randomUUID(),
       label: sanitizedDraft.name,
-      subtitle: `Age ${sanitizedDraft.age}`,
+      subtitle: `${
+        sanitizedDraft.selectedOptionIdsByGroup.gender
+          ?.replace(/^gender_/, "")
+          .replaceAll("_", " ")
+          .replace(/\b\w/g, (letter) => letter.toUpperCase()) ?? "Unknown"
+      } - Age ${sanitizedDraft.age}`,
       draft: sanitizedDraft,
-      createdAt: editingCharacter?.createdAt ?? new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: editingEntity?.createdAt ?? now,
+      updatedAt: now,
     };
 
-    characters.saveEntity(character);
-    onChangePage("characters", { force: true });
+    collection.saveEntity(entity);
+    onChangePage(config.returnPage, { force: true });
   }
+
+  const currentStep = characterCreationSteps[currentStepIndex];
 
   const visibleOptionGroups = currentStep.optionGroups
     .map((group) => getResolvedOptionGroup(group, draft))
     .filter((group) => group.visible);
 
   return (
-    <div className="character-wizard-layout">
-      <aside className="character-wizard-sidebar">
-        <div className="character-wizard-sidebar-header">
-          <h2>Character Steps</h2>
+    <div className="persona-wizard-layout">
+      <aside className="persona-wizard-sidebar">
+        <div className="persona-wizard-sidebar-header">
+          <h2>{entityTypeLabel} Steps</h2>
         </div>
 
-        <nav className="wizard-step-nav" aria-label="Character creation steps">
+        <nav
+          className="wizard-step-nav"
+          aria-label={`${entityTypeLabel} creation steps`}
+        >
           {characterCreationSteps.map((step, index) => {
             const stepIsValid = isStepValid(step);
+
             return (
               <button
                 key={step.id}
@@ -216,25 +293,33 @@ export default function PersonaWizard({ onChangePage, setNavigationBlocker }) {
           })}
         </nav>
 
-        <div className="character-wizard-sidebar-footer">
+        <div className="persona-wizard-sidebar-footer">
           <button
             type="button"
             className="randomize-icon-button"
-            onClick={randomizeCharacter}
-            aria-label="Randomize character"
-            title="Randomize character"
+            onClick={randomizePersona}
+            aria-label={`Randomize ${entityTypeLabelLower}`}
+            title={`Randomize ${entityTypeLabelLower}`}
           >
-            <img src={iconUrlDice} alt="" />
+            <img src={iconUrlDice} alt="" draggable={false} />
           </button>
 
           <button
             type="button"
             className="cancel-button"
-            onClick={cancelCharacterCreation}
+            onClick={cancelPersonaCreation}
           >
             Cancel
           </button>
         </div>
+        <button
+          type="button"
+          className="primary-button"
+          disabled={!isPersonaDraftValid()}
+          onClick={finishPersonaCreation}
+        >
+          {finishButtonLabel}
+        </button>
         {showDebugControls && (
           <button
             type="button"
@@ -252,20 +337,15 @@ export default function PersonaWizard({ onChangePage, setNavigationBlocker }) {
             Log Draft
           </button>
         )}
-        <button
-          type="button"
-          className="primary-button"
-          disabled={!isCharacterDraftValid()}
-          onClick={finishCharacterCreation}
-        >
-          {finishButtonLabel}
-        </button>
       </aside>
 
-      <main className="character-wizard-main">
-        <header ref={mainTopRef} className="character-wizard-header">
+      <main className="persona-wizard-main">
+        <header ref={mainTopRef} className="persona-wizard-header">
           <h1>{wizardTitle}</h1>
-          <p>Build a persona with name, appearance, traits, and backstory.</p>
+          <p>
+            {config.wizardDescription ??
+              "Build a persona with name, appearance, traits, and backstory."}
+          </p>
         </header>
 
         <div className="wizard-progress">
@@ -280,13 +360,10 @@ export default function PersonaWizard({ onChangePage, setNavigationBlocker }) {
                 Name
                 <input
                   type="text"
-                  placeholder="Character name"
+                  placeholder={`${entityTypeLabel} name`}
                   value={draft.name}
                   onChange={(event) =>
-                    setDraft((previousDraft) => ({
-                      ...previousDraft,
-                      name: event.target.value,
-                    }))
+                    updateDraftField("name", event.target.value)
                   }
                 />
               </label>
@@ -299,10 +376,7 @@ export default function PersonaWizard({ onChangePage, setNavigationBlocker }) {
                   max="100"
                   value={draft.age}
                   onChange={(event) =>
-                    setDraft((previousDraft) => ({
-                      ...previousDraft,
-                      age: Number(event.target.value),
-                    }))
+                    updateDraftField("age", Number(event.target.value))
                   }
                 />
               </label>

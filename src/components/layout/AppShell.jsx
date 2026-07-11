@@ -8,7 +8,10 @@ import CharactersPage from "../tabs/CharactersPage";
 import UserPage from "../tabs/UserPage";
 import ImageGenerationPage from "../tabs/ImageGenerationPage";
 import SettingsPage from "../tabs/SettingsPage";
-import PersonaWizard from "../forms/PersonaWizard";
+import PersonaWizard, {
+  characterWizardConfig,
+  userPersonaWizardConfig,
+} from "../forms/PersonaWizard";
 import { useConfirmDialog } from "../../state/ConfirmDialogContext";
 
 const pageComponents = {
@@ -17,7 +20,6 @@ const pageComponents = {
   user: UserPage,
   images: ImageGenerationPage,
   settings: SettingsPage,
-  "character-wizard": PersonaWizard,
 };
 
 export default function AppShell() {
@@ -55,17 +57,41 @@ export default function AppShell() {
     setActivePage(nextPage);
   }
 
+  function renderActivePage() {
+    if (activePage === "character-persona-wizard") {
+      return (
+        <PersonaWizard
+          activePage={activePage}
+          onChangePage={requestPageChange}
+          setNavigationBlocker={setNavigationBlocker}
+          config={characterWizardConfig}
+        />
+      );
+    }
+
+    if (activePage === "user-persona-wizard") {
+      return (
+        <PersonaWizard
+          activePage={activePage}
+          onChangePage={requestPageChange}
+          setNavigationBlocker={setNavigationBlocker}
+          config={userPersonaWizardConfig}
+        />
+      );
+    }
+
+    const ActivePage = pageComponents[activePage] ?? ChatsPage;
+
+    return (
+      <ActivePage activePage={activePage} onChangePage={requestPageChange} />
+    );
+  }
+
   return (
     <div className="app-shell">
       <Sidebar activePage={activePage} onChangePage={requestPageChange} />
 
-      <main className="app-content">
-        <ActivePage
-          activePage={activePage}
-          onChangePage={requestPageChange}
-          setNavigationBlocker={setNavigationBlocker}
-        />{" "}
-      </main>
+      <main className="app-content">{renderActivePage()}</main>
 
       <FooterMenu activePage={activePage} onChangePage={requestPageChange} />
     </div>

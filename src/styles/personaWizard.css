@@ -1,12 +1,12 @@
 /* Character Wizard Layout */
 
-.character-wizard-layout {
+.persona-wizard-layout {
   display: grid;
   grid-template-columns: 180px minmax(0, 1fr);
   min-height: 100%;
 }
 
-.character-wizard-sidebar {
+.persona-wizard-sidebar {
   position: sticky;
   top: 0;
   align-self: start;
@@ -23,11 +23,11 @@
   gap: 0.1rem;
 }
 
-.character-wizard-sidebar-header {
+.persona-wizard-sidebar-header {
   flex: 0 0 auto;
 }
 
-.character-wizard-sidebar-footer {
+.persona-wizard-sidebar-footer {
   flex: 0 0 auto;
 
   display: grid;
@@ -38,14 +38,14 @@
   border-top: 1px solid #1f2937;
 }
 
-.character-wizard-sidebar h2 {
+.persona-wizard-sidebar h2 {
   margin: 0 0 1rem;
   font-size: 1rem;
   text-align: center;
   color: #f8fafc;
 }
 
-.character-wizard-main {
+.persona-wizard-main {
   width: min(1100px, 92%);
   justify-self: center;
   padding: 1.5rem;
