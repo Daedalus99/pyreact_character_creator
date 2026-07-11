@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Sidebar from "./Sidebar";
 import FooterMenu from "./FooterMenu";
 import ChatsPage from "../tabs/ChatsPage";
+import ChatSettingsForm from "../forms/ChatSettingsForm";
 import CharactersPage from "../tabs/CharactersPage";
 import UserPage from "../tabs/UserPage";
 import ImageGenerationPage from "../tabs/ImageGenerationPage";
@@ -76,6 +77,16 @@ export default function AppShell() {
           onChangePage={requestPageChange}
           setNavigationBlocker={setNavigationBlocker}
           config={userPersonaWizardConfig}
+        />
+      );
+    }
+
+    if (activePage === "chat-settings") {
+      return (
+        <ChatSettingsForm
+          activePage={activePage}
+          onChangePage={requestPageChange}
+          setNavigationBlocker={setNavigationBlocker}
         />
       );
     }
