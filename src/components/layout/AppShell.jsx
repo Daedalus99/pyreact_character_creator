@@ -5,19 +5,19 @@ import Sidebar from "./Sidebar";
 import FooterMenu from "./FooterMenu";
 import ChatsPage from "../tabs/ChatsPage";
 import CharactersPage from "../tabs/CharactersPage";
-import ProfilesPage from "../tabs/ProfilesPage";
+import UserPage from "../tabs/UserPage";
 import ImageGenerationPage from "../tabs/ImageGenerationPage";
 import SettingsPage from "../tabs/SettingsPage";
-import CharacterWizard from "../forms/CharacterWizard";
+import PersonaWizard from "../forms/PersonaWizard";
 import { useConfirmDialog } from "../../state/ConfirmDialogContext";
 
 const pageComponents = {
   chats: ChatsPage,
   characters: CharactersPage,
-  profiles: ProfilesPage,
+  user: UserPage,
   images: ImageGenerationPage,
   settings: SettingsPage,
-  "character-wizard": CharacterWizard,
+  "character-wizard": PersonaWizard,
 };
 
 export default function AppShell() {

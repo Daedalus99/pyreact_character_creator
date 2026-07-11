@@ -14,6 +14,22 @@ import { useAppData } from "../../state/AppDataContext";
 
 const iconUrlDice = "/icons/icon_dice.svg";
 
+const characterWizardConfig = {
+  entityTypeLabel: "Character",
+  entityTypeLabelPlural: "Characters",
+  returnPage: "characters",
+  collectionKey: "characters",
+  pageDescription: "Create and manage AI-controlled roleplay characters.",
+};
+
+const userPersonaWizardConfig = {
+  entityTypeLabel: "User Persona",
+  entityTypeLabelPlural: "User Personas",
+  returnPage: "user",
+  collectionKey: "userPersonas",
+  pageDescription: "Create and manage the identities you roleplay as.",
+};
+
 function cloneDraft(draft) {
   return JSON.parse(JSON.stringify(draft));
 }
@@ -22,10 +38,7 @@ function getDraftSignature(draft) {
   return JSON.stringify(draft);
 }
 
-export default function CharacterWizard({
-  onChangePage,
-  setNavigationBlocker,
-}) {
+export default function PersonaWizard({ onChangePage, setNavigationBlocker }) {
   const { characters } = useAppData();
   const editingCharacter = characters.editingEntity;
   const isEditingCharacter = Boolean(editingCharacter);
