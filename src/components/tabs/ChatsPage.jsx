@@ -23,9 +23,8 @@ export default function ChatsPage({ onChangePage }) {
   }
 
   function openChat(chatId) {
-    // This will eventually open the real chat screen.
-    // Do not use startEditEntity here, because opening and editing are different actions.
-    console.log("Open chat:", chatId);
+    chats.openEntity(chatId);
+    onChangePage("chat-view");
   }
 
   return (

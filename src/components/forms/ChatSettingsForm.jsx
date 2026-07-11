@@ -41,6 +41,7 @@ function getCharacterSubtitle(characterCount) {
 export default function ChatSettingsForm({
   onChangePage,
   setNavigationBlocker,
+  returnPage = "chats",
 }) {
   const { chats, characters, userPersonas } = useAppData();
 
@@ -140,11 +141,16 @@ export default function ChatSettingsForm({
     };
 
     chats.saveEntity(chat);
-    onChangePage("chats", { force: true });
+
+    if (returnPage === "chat-view") {
+      chats.openEntity(chat.id);
+    }
+
+    onChangePage(returnPage, { force: true });
   }
 
   function cancelChatSettings() {
-    onChangePage("chats");
+    onChangePage(returnPage);
   }
 
   return (

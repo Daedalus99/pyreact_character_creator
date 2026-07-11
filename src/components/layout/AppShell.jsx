@@ -5,6 +5,7 @@ import Sidebar from "./Sidebar";
 import FooterMenu from "./FooterMenu";
 import ChatsPage from "../tabs/ChatsPage";
 import ChatSettingsForm from "../forms/ChatSettingsForm";
+import ChatViewPage from "../tabs/ChatViewPage";
 import CharactersPage from "../tabs/CharactersPage";
 import UserPage from "../tabs/UserPage";
 import ImageGenerationPage from "../tabs/ImageGenerationPage";
@@ -26,6 +27,7 @@ const pageComponents = {
 export default function AppShell() {
   const [activePage, setActivePage] = useState("chats");
   const [navigationBlocker, setNavigationBlocker] = useState(null);
+  const [chatSettingsReturnPage, setChatSettingsReturnPage] = useState("chats");
   const confirm = useConfirmDialog();
 
   const ActivePage = useMemo(
@@ -54,6 +56,9 @@ export default function AppShell() {
       }
     }
 
+    if (nextPage === "chat-settings") {
+      setChatSettingsReturnPage(options.returnPage ?? "chats");
+    }
     setNavigationBlocker(null);
     setActivePage(nextPage);
   }
@@ -87,6 +92,16 @@ export default function AppShell() {
           activePage={activePage}
           onChangePage={requestPageChange}
           setNavigationBlocker={setNavigationBlocker}
+          returnPage={chatSettingsReturnPage}
+        />
+      );
+    }
+
+    if (activePage === "chat-view") {
+      return (
+        <ChatViewPage
+          activePage={activePage}
+          onChangePage={requestPageChange}
         />
       );
     }

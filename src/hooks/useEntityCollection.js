@@ -24,6 +24,7 @@ export function useEntityCollection(storageKey, initialEntities = []) {
   );
 
   const [editingEntityId, setEditingEntityId] = useState(null);
+  const [activeEntityId, setActiveEntityId] = useState(null);
 
   useEffect(() => {
     saveToLocalStorage(storageKey, entities);
@@ -36,6 +37,17 @@ export function useEntityCollection(storageKey, initialEntities = []) {
 
     return entities.find((entity) => entity.id === editingEntityId) ?? null;
   }, [entities, editingEntityId]);
+
+  const activeEntity =
+    entities.find((entity) => entity.id === activeEntityId) ?? null;
+
+  function openEntity(entityId) {
+    setActiveEntityId(entityId);
+  }
+
+  function clearActiveEntity() {
+    setActiveEntityId(null);
+  }
 
   function startNewEntity() {
     setEditingEntityId(null);
@@ -68,25 +80,36 @@ export function useEntityCollection(storageKey, initialEntities = []) {
   }
 
   function deleteEntity(entityId) {
-    setEntities((previousEntities) =>
-      previousEntities.filter((entity) => entity.id !== entityId),
+    setEntities((currentEntities) =>
+      currentEntities.filter((entity) => entity.id !== entityId),
     );
 
-    setEditingEntityId((currentEditingEntityId) =>
-      currentEditingEntityId === entityId ? null : currentEditingEntityId,
-    );
+    if (editingEntityId === entityId) {
+      setEditingEntityId(null);
+    }
+
+    if (activeEntityId === entityId) {
+      setActiveEntityId(null);
+    }
   }
 
   return {
     entities,
+
     editingEntityId,
     editingEntity,
 
+    activeEntityId,
+    activeEntity,
+
     startNewEntity,
     startEditEntity,
-    clearEditingEntity,
 
+    clearEditingEntity,
     saveEntity,
     deleteEntity,
+    openEntity,
+
+    clearActiveEntity,
   };
 }

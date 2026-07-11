@@ -1,6 +1,7 @@
 @import "./common.css";
 @import "./personaWizard.css";
 @import "./chatSettings.css";
+@import "./chatView.css";
 
 /* Global layout and widget styles for the React UI. */
 :root {

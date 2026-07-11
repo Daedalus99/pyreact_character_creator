@@ -1,0 +1,48 @@
+.chat-view-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 1.5rem;
+}
+
+.chat-view-sidebar,
+.chat-view-main,
+.chat-placeholder,
+.chat-view-section {
+  border: 1px solid #1f2937;
+  border-radius: 18px;
+  background: #0f172a;
+}
+
+.chat-view-sidebar {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.chat-view-main {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.chat-placeholder,
+.chat-view-section {
+  padding: 1.25rem;
+}
+
+.chat-view-section h2,
+.chat-placeholder h2 {
+  margin: 0 0 0.5rem;
+}
+
+.chat-view-section p,
+.chat-placeholder p {
+  margin: 0;
+  color: #cbd5e1;
+}
+
+.chat-view-section ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
