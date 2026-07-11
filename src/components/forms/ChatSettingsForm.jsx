@@ -75,6 +75,32 @@ export default function ChatSettingsForm({
     };
   }, [setNavigationBlocker, hasUnsavedChanges]);
 
+  useEffect(() => {
+    if (editingChat) {
+      return;
+    }
+
+    if (draft.userPersonaId) {
+      return;
+    }
+
+    const defaultUserPersonaId = getDefaultUserPersonaId(userPersonas);
+
+    if (!defaultUserPersonaId) {
+      return;
+    }
+
+    setDraft((currentDraft) => ({
+      ...currentDraft,
+      userPersonaId: currentDraft.userPersonaId || defaultUserPersonaId,
+    }));
+
+    setInitialDraft((currentDraft) => ({
+      ...currentDraft,
+      userPersonaId: currentDraft.userPersonaId || defaultUserPersonaId,
+    }));
+  }, [editingChat, draft.userPersonaId, userPersonas]);
+
   function updateDraftField(field, value) {
     setDraft((currentDraft) => ({
       ...currentDraft,
@@ -127,6 +153,7 @@ export default function ChatSettingsForm({
     };
 
     const chat = {
+      ...editingChat,
       id: editingChat?.id ?? crypto.randomUUID(),
       label: title,
       subtitle: subtitleParts.join(" · ") || "Chat settings",
@@ -136,6 +163,7 @@ export default function ChatSettingsForm({
       scenario: sanitizedDraft.scenario,
       greeting: sanitizedDraft.greeting,
       draft: sanitizedDraft,
+      messages: editingChat?.messages ?? [],
       createdAt: editingChat?.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -151,6 +179,10 @@ export default function ChatSettingsForm({
 
   function cancelChatSettings() {
     onChangePage(returnPage);
+  }
+
+  function getDefaultUserPersonaId(userPersonas) {
+    return userPersonas.entities[0]?.id ?? "";
   }
 
   return (
@@ -183,13 +215,15 @@ export default function ChatSettingsForm({
               updateDraftField("userPersonaId", event.target.value)
             }
           >
-            <option value="">No user persona selected</option>
-
-            {userPersonas.entities.map((persona) => (
-              <option key={persona.id} value={persona.id}>
-                {persona.label}
-              </option>
-            ))}
+            {userPersonas.entities.length === 0 ? (
+              <option value="">No user personas available</option>
+            ) : (
+              userPersonas.entities.map((persona) => (
+                <option key={persona.id} value={persona.id}>
+                  {persona.label}
+                </option>
+              ))
+            )}
           </select>
         </label>
       </div>

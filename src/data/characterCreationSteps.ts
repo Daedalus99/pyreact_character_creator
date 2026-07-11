@@ -55,7 +55,7 @@ export const creationStepTraits: CreationStep = {
   title: "Traits",
   optionGroups: [
     allOptionGroups.personalityOptionGroup,
-    allOptionGroups.relationshipOptionGroup,
+    allOptionGroups.kinksOptionGroup,
   ],
 };
 
@@ -65,7 +65,6 @@ export const creationStepLifestyle: CreationStep = {
   optionGroups: [
     allOptionGroups.occupationOptionGroup,
     allOptionGroups.hobbiesOptionGroup,
-    allOptionGroups.kinksOptionGroup,
   ],
 };
 

@@ -46,3 +46,142 @@
   margin: 0;
   padding-left: 1.25rem;
 }
+
+.chat-view-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 1.5rem;
+}
+
+.chat-view-sidebar,
+.chat-view-main,
+.chat-view-section,
+.chat-greeting-panel,
+.chat-empty-state,
+.chat-message {
+  border: 1px solid #1f2937;
+  border-radius: 18px;
+  background: #0f172a;
+}
+
+.chat-view-sidebar {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.chat-view-main {
+  display: grid;
+  grid-template-rows: auto minmax(320px, 1fr) auto;
+  gap: 1rem;
+  padding: 1.25rem;
+  min-height: calc(
+    100vh - var(--title-bar-height) - var(--footer-height) - 7rem
+  );
+}
+
+.chat-view-section,
+.chat-greeting-panel,
+.chat-empty-state {
+  padding: 1.25rem;
+}
+
+.chat-view-section h2,
+.chat-greeting-panel h2,
+.chat-empty-state h2 {
+  margin: 0 0 0.5rem;
+}
+
+.chat-view-section p,
+.chat-greeting-panel p,
+.chat-empty-state p {
+  margin: 0;
+  color: #cbd5e1;
+}
+
+.chat-view-section ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.chat-view-sidebar-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.chat-message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 0.25rem;
+}
+
+.chat-message {
+  width: min(78%, 760px);
+  padding: 1rem;
+}
+
+.chat-message.user {
+  align-self: flex-end;
+  background: #172033;
+}
+
+.chat-message.assistant {
+  align-self: flex-start;
+}
+
+.chat-message-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.chat-message-header strong {
+  color: #f8fafc;
+}
+
+.chat-message-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-message-actions button {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+.chat-message p {
+  margin: 0;
+  color: #e5e7eb;
+  white-space: pre-wrap;
+}
+
+.chat-input-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.chat-input-form textarea {
+  width: 100%;
+  min-height: 72px;
+  max-height: 180px;
+  resize: vertical;
+  border: 1px solid #374151;
+  border-radius: 16px;
+  background: #020617;
+  color: #f8fafc;
+  padding: 0.85rem 1rem;
+  font: inherit;
+}
+
+.chat-input-form textarea:focus {
+  outline: 2px solid #818cf8;
+  outline-offset: 2px;
+}
