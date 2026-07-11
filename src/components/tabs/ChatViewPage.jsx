@@ -3,6 +3,7 @@ import { useAppData } from "../../state/AppDataContext";
 import { useConfirmDialog } from "../../state/ConfirmDialogContext";
 import ChatInput from "../chat/ChatInput";
 import ChatMessageList from "../chat/ChatMessageList";
+import { useState } from "react";
 
 function createChatMessage({
   role,
@@ -10,6 +11,7 @@ function createChatMessage({
   speakerId = null,
   speakerType = null,
   speakerLabel = null,
+  status = "complete",
 }) {
   return {
     id: crypto.randomUUID(),
@@ -18,7 +20,7 @@ function createChatMessage({
     speakerType,
     speakerLabel,
     content,
-    status: "complete",
+    status,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -27,6 +29,7 @@ function createChatMessage({
 export default function ChatViewPage({ onChangePage }) {
   const { chats, characters, userPersonas } = useAppData();
   const confirm = useConfirmDialog();
+  const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
 
   const chat = chats.activeEntity;
 
@@ -142,8 +145,76 @@ export default function ChatViewPage({ onChangePage }) {
     console.log("Cancel response:", messageId);
   }
 
-  function requestAssistantResponse() {
-    console.log("Request assistant response for chat:", chat.id);
+  async function requestAssistantResponse() {
+    if (isGeneratingResponse) {
+      return;
+    }
+
+    const respondingCharacter = selectedCharacters[0];
+
+    if (!respondingCharacter) {
+      console.warn("Cannot generate response without a selected character.");
+      return;
+    }
+
+    const generatingMessage = createChatMessage({
+      role: "assistant",
+      content: "Generating response...",
+      speakerId: respondingCharacter.id,
+      speakerType: "character",
+      speakerLabel: respondingCharacter.label,
+      status: "generating",
+    });
+
+    const messagesWithPlaceholder = [...messages, generatingMessage];
+
+    saveChatMessages(messagesWithPlaceholder);
+    setIsGeneratingResponse(true);
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/chat/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          chat,
+          messages,
+          respondingCharacter,
+          userPersona: selectedUserPersona ?? null,
+          characters: selectedCharacters,
+        }),
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Failed to generate response.");
+      }
+
+      const completedMessage = {
+        ...generatingMessage,
+        content: payload.content,
+        status: "complete",
+        updatedAt: new Date().toISOString(),
+      };
+
+      saveChatMessages([...messages, completedMessage]);
+    } catch (error) {
+      console.warn("Failed to generate assistant response.", error);
+
+      const failedMessage = {
+        ...generatingMessage,
+        content:
+          "Failed to generate response. Check that LM Studio is running and the backend can reach it.",
+        status: "error",
+        updatedAt: new Date().toISOString(),
+      };
+
+      saveChatMessages([...messages, failedMessage]);
+    } finally {
+      setIsGeneratingResponse(false);
+    }
   }
 
   const lastMessage = messages[messages.length - 1] ?? null;
@@ -228,12 +299,16 @@ export default function ChatViewPage({ onChangePage }) {
                 type="button"
                 className="chat-response-request-button primary-button"
                 onClick={requestAssistantResponse}
+                disabled={isGeneratingResponse}
               >
-                Request Response
+                {isGeneratingResponse ? "Generating..." : "Request Response"}
               </button>
             </div>
           )}
-          <ChatInput onSendMessage={sendUserMessage} />
+          <ChatInput
+            onSendMessage={sendUserMessage}
+            disabled={isGeneratingResponse}
+          />
         </main>
       </section>
     </BasePage>

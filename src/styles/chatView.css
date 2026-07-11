@@ -127,6 +127,7 @@
   margin: 0;
   color: #e5e7eb;
   white-space: pre-wrap;
+  text-align: left;
 }
 
 .chat-message-edit-textarea {
@@ -266,4 +267,17 @@
 .chat-response-request-row,
 .chat-input-form {
   flex: 0 0 auto;
+}
+
+.chat-message.generating p {
+  color: #cbd5e1;
+  font-style: italic;
+}
+
+.chat-message.error {
+  border-color: #7f1d1d;
+}
+
+.chat-message.error p {
+  color: #fecaca;
 }

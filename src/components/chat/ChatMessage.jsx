@@ -28,6 +28,7 @@ export default function ChatMessage({
 
   const isUser = message.role === "user";
   const isGenerating = message.status === "generating";
+  const isError = message.status === "error";
 
   async function copyMessage() {
     try {
@@ -65,6 +66,7 @@ export default function ChatMessage({
         isUser ? "user" : "assistant",
         isEditing ? "editing" : "",
         isGenerating ? "generating" : "",
+        isError ? "error" : "",
       ]
         .filter(Boolean)
         .join(" ")}
