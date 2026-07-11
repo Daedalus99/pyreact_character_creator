@@ -91,7 +91,6 @@ def build_chat_prompt_payload(data: dict) -> list[dict[str, str]]:
                     "content": f"{speaker_label or character_name}: {content}",
                 }
             )
-
     return api_messages
 
 @app.post("/api/chat/generate")
@@ -99,6 +98,7 @@ def generate_chat_response():
     data = request.get_json(silent=True) or {}
 
     api_messages = build_chat_prompt_payload(data)
+    app.logger.info(api_messages)
 
     try:
         response = requests.post(
