@@ -1,6 +1,6 @@
 // AppShell is the top-level layout for the desktop app.
 // It renders the sidebar, footer menu, and the selected page content.
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Sidebar from "./Sidebar";
 import FooterMenu from "./FooterMenu";
 import ChatsPage from "../tabs/ChatsPage";
@@ -29,11 +29,6 @@ export default function AppShell() {
   const [navigationBlocker, setNavigationBlocker] = useState(null);
   const [chatSettingsReturnPage, setChatSettingsReturnPage] = useState("chats");
   const confirm = useConfirmDialog();
-
-  const ActivePage = useMemo(
-    () => pageComponents[activePage] ?? ChatsPage,
-    [activePage],
-  );
 
   async function requestPageChange(nextPage, options = {}) {
     if (nextPage === activePage) {

@@ -1,53 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
+import { loadCollection, saveCollection } from "../storage/entityStorage";
 
-function loadFromLocalStorage(storageKey, fallbackValue) {
-  try {
-    const savedValue = localStorage.getItem(storageKey);
-    return savedValue ? JSON.parse(savedValue) : fallbackValue;
-  } catch (error) {
-    console.warn(`Failed to load ${storageKey} from localStorage`, error);
-    return fallbackValue;
-  }
-}
-
-function saveToLocalStorage(storageKey, value) {
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(value));
-  } catch (error) {
-    console.warn(`Failed to save ${storageKey} to localStorage`, error);
-  }
-}
-
-export function useEntityCollection(storageKey, initialEntities = []) {
+export function useEntityCollection(collectionName, fallbackEntities = []) {
   const [entities, setEntities] = useState(() =>
-    loadFromLocalStorage(storageKey, initialEntities),
+    loadCollection(collectionName, fallbackEntities),
   );
 
   const [editingEntityId, setEditingEntityId] = useState(null);
   const [activeEntityId, setActiveEntityId] = useState(null);
 
+  const editingEntity = useMemo(
+    () => entities.find((entity) => entity.id === editingEntityId) ?? null,
+    [entities, editingEntityId],
+  );
+
+  const activeEntity = useMemo(
+    () => entities.find((entity) => entity.id === activeEntityId) ?? null,
+    [entities, activeEntityId],
+  );
+
   useEffect(() => {
-    saveToLocalStorage(storageKey, entities);
-  }, [storageKey, entities]);
-
-  const editingEntity = useMemo(() => {
-    if (!editingEntityId) {
-      return null;
-    }
-
-    return entities.find((entity) => entity.id === editingEntityId) ?? null;
-  }, [entities, editingEntityId]);
-
-  const activeEntity =
-    entities.find((entity) => entity.id === activeEntityId) ?? null;
-
-  function openEntity(entityId) {
-    setActiveEntityId(entityId);
-  }
-
-  function clearActiveEntity() {
-    setActiveEntityId(null);
-  }
+    saveCollection(collectionName, entities);
+  }, [collectionName, entities]);
 
   function startNewEntity() {
     setEditingEntityId(null);
@@ -61,19 +35,27 @@ export function useEntityCollection(storageKey, initialEntities = []) {
     setEditingEntityId(null);
   }
 
-  function saveEntity(entity) {
-    setEntities((previousEntities) => {
-      const entityExists = previousEntities.some(
-        (existingEntity) => existingEntity.id === entity.id,
+  function openEntity(entityId) {
+    setActiveEntityId(entityId);
+  }
+
+  function clearActiveEntity() {
+    setActiveEntityId(null);
+  }
+
+  function saveEntity(entityToSave) {
+    setEntities((currentEntities) => {
+      const existingEntity = currentEntities.find(
+        (entity) => entity.id === entityToSave.id,
       );
 
-      if (entityExists) {
-        return previousEntities.map((existingEntity) =>
-          existingEntity.id === entity.id ? entity : existingEntity,
-        );
+      if (!existingEntity) {
+        return [...currentEntities, entityToSave];
       }
 
-      return [...previousEntities, entity];
+      return currentEntities.map((entity) =>
+        entity.id === entityToSave.id ? entityToSave : entity,
+      );
     });
 
     setEditingEntityId(null);
@@ -106,10 +88,10 @@ export function useEntityCollection(storageKey, initialEntities = []) {
     startEditEntity,
 
     clearEditingEntity,
-    saveEntity,
-    deleteEntity,
     openEntity,
-
     clearActiveEntity,
+    saveEntity,
+
+    deleteEntity,
   };
 }
