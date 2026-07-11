@@ -8,7 +8,11 @@ function canUseLocalStorage() {
   return typeof window !== "undefined" && Boolean(window.localStorage);
 }
 
-export function loadCollection(collectionName, fallbackEntities = []) {
+function canUseElectronStorage() {
+  return typeof window !== "undefined" && Boolean(window.appStorage);
+}
+
+function loadLocalCollection(collectionName, fallbackEntities = []) {
   if (!canUseLocalStorage()) {
     return fallbackEntities;
   }
@@ -42,7 +46,7 @@ export function loadCollection(collectionName, fallbackEntities = []) {
   }
 }
 
-export function saveCollection(collectionName, entities) {
+function saveLocalCollection(collectionName, entities) {
   if (!canUseLocalStorage()) {
     return;
   }
@@ -58,7 +62,7 @@ export function saveCollection(collectionName, entities) {
   }
 }
 
-export function clearCollection(collectionName) {
+function clearLocalCollection(collectionName) {
   if (!canUseLocalStorage()) {
     return;
   }
@@ -69,6 +73,79 @@ export function clearCollection(collectionName) {
   } catch (error) {
     console.warn(
       `Failed to clear collection "${collectionName}" from localStorage.`,
+      error,
+    );
+  }
+}
+
+export async function loadCollection(collectionName, fallbackEntities = []) {
+  if (!canUseElectronStorage()) {
+    return loadLocalCollection(collectionName, fallbackEntities);
+  }
+
+  try {
+    const electronEntities =
+      await window.appStorage.loadCollection(collectionName);
+
+    if (Array.isArray(electronEntities) && electronEntities.length > 0) {
+      return electronEntities;
+    }
+
+    // One-time migration path from the old localStorage prototype storage.
+    // After a successful migration, remove the localStorage copy so deleted
+    // Electron collections do not get resurrected later.
+    const localEntities = loadLocalCollection(collectionName, []);
+
+    if (localEntities.length > 0) {
+      await window.appStorage.saveCollection(collectionName, localEntities);
+      clearLocalCollection(collectionName);
+
+      return localEntities;
+    }
+
+    return Array.isArray(electronEntities)
+      ? electronEntities
+      : fallbackEntities;
+  } catch (error) {
+    console.warn(
+      `Failed to load collection "${collectionName}" from Electron storage. Falling back to localStorage.`,
+      error,
+    );
+
+    return loadLocalCollection(collectionName, fallbackEntities);
+  }
+}
+
+export async function saveCollection(collectionName, entities) {
+  if (!canUseElectronStorage()) {
+    saveLocalCollection(collectionName, entities);
+    return;
+  }
+
+  try {
+    await window.appStorage.saveCollection(collectionName, entities);
+  } catch (error) {
+    console.warn(
+      `Failed to save collection "${collectionName}" to Electron storage. Falling back to localStorage.`,
+      error,
+    );
+
+    saveLocalCollection(collectionName, entities);
+  }
+}
+
+export async function clearCollection(collectionName) {
+  if (!canUseElectronStorage()) {
+    clearLocalCollection(collectionName);
+    return;
+  }
+
+  try {
+    await window.appStorage.clearCollection(collectionName);
+    clearLocalCollection(collectionName);
+  } catch (error) {
+    console.warn(
+      `Failed to clear collection "${collectionName}" from Electron storage.`,
       error,
     );
   }

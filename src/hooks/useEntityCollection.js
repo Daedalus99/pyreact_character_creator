@@ -2,10 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { loadCollection, saveCollection } from "../storage/entityStorage";
 
 export function useEntityCollection(collectionName, fallbackEntities = []) {
-  const [entities, setEntities] = useState(() =>
-    loadCollection(collectionName, fallbackEntities),
-  );
-
+  const [entities, setEntities] = useState(fallbackEntities);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [editingEntityId, setEditingEntityId] = useState(null);
   const [activeEntityId, setActiveEntityId] = useState(null);
 
@@ -20,8 +18,38 @@ export function useEntityCollection(collectionName, fallbackEntities = []) {
   );
 
   useEffect(() => {
+    let wasCancelled = false;
+
+    async function loadEntities() {
+      setIsLoaded(false);
+
+      const loadedEntities = await loadCollection(
+        collectionName,
+        fallbackEntities,
+      );
+
+      if (wasCancelled) {
+        return;
+      }
+
+      setEntities(loadedEntities);
+      setIsLoaded(true);
+    }
+
+    loadEntities();
+
+    return () => {
+      wasCancelled = true;
+    };
+  }, [collectionName]);
+
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+
     saveCollection(collectionName, entities);
-  }, [collectionName, entities]);
+  }, [collectionName, entities, isLoaded]);
 
   function startNewEntity() {
     setEditingEntityId(null);
@@ -77,21 +105,17 @@ export function useEntityCollection(collectionName, fallbackEntities = []) {
 
   return {
     entities,
-
+    isLoaded,
     editingEntityId,
     editingEntity,
-
     activeEntityId,
     activeEntity,
-
     startNewEntity,
     startEditEntity,
-
     clearEditingEntity,
     openEntity,
     clearActiveEntity,
     saveEntity,
-
     deleteEntity,
   };
 }
