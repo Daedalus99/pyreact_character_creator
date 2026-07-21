@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "concurrently -k \"npm run dev:frontend\" \"npm run dev:backend\" \"wait-on http://127.0.0.1:5173 http://127.0.0.1:5000/api/health && npm run dev:electron\"",
     "dev:frontend": "vite",
-    "dev:backend": "python backend/app.py",
+    "dev:backend": "start_backend.bat",
     "dev:electron": "electron .",
     "build": "vite build"
   },

@@ -1,0 +1,177 @@
+.settings-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.settings-main {
+  margin-bottom: 40px;
+}
+
+.settings-group {
+  margin-bottom: 32px;
+  padding: 24px;
+  background: var(--card-background, #f8f9fa);
+  border: 1px solid var(--border-color, #e9ecef);
+  border-radius: 8px;
+}
+
+.settings-group h2 {
+  margin: 0 0 24px 0;
+  color: var(--text-primary, #212529);
+  font-size: 1.5rem;
+}
+
+.settings-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--input-background, #ffffff);
+  border: 1px solid var(--input-border, #dee2e6);
+  border-radius: 6px;
+}
+
+.settings-section h3 {
+  margin: 0 0 16px 0;
+  color: var(--text-primary, #212529);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: var(--text-secondary, #6c757d);
+  font-size: 0.875rem;
+}
+
+.form-group input {
+  padding: 8px 12px;
+  border: 1px solid var(--input-border, #ced4da);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  background: var(--input-background, #ffffff);
+  color: var(--text-primary, #212529);
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--primary-color, #007bff);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.form-group input[type="password"] {
+  font-family: monospace;
+}
+
+.settings-info {
+  padding: 16px;
+  background: var(--info-background, #f8f9fa);
+  border: 1px solid var(--info-border, #e9ecef);
+  border-radius: 6px;
+}
+
+.settings-info p {
+  margin: 0 0 8px 0;
+  font-size: 0.875rem;
+}
+
+.settings-info p:last-child {
+  margin-bottom: 0;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 16px 0;
+  border-top: 1px solid var(--border-color, #e9ecef);
+}
+
+.settings-actions button {
+  padding: 8px 16px;
+  border: 1px solid var(--button-border, #ced4da);
+  border-radius: 4px;
+  background: var(--button-background, #ffffff);
+  color: var(--button-text, #212529);
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.settings-actions button:hover {
+  background: var(--button-hover, #f8f9fa);
+}
+
+.settings-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.settings-actions button.primary-button {
+  background: var(--primary-color, #007bff);
+  color: white;
+  border-color: var(--primary-color, #007bff);
+}
+
+.settings-actions button.primary-button:hover:not(:disabled) {
+  background: var(--primary-hover, #0056b3);
+  border-color: var(--primary-hover, #0056b3);
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  .settings-group {
+    background: #2d3748;
+    border-color: #4a5568;
+  }
+  
+  .settings-section {
+    background: #1a202c;
+    border-color: #2d3748;
+  }
+  
+  .settings-group h2,
+  .settings-section h3 {
+    color: #f7fafc;
+  }
+  
+  .form-group label {
+    color: #a0aec0;
+  }
+  
+  .form-group input {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #f7fafc;
+  }
+  
+  .settings-info {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #e2e8f0;
+  }
+  
+  .settings-actions {
+    border-color: #4a5568;
+  }
+  
+  .settings-actions button {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #f7fafc;
+  }
+  
+  .settings-actions button:hover {
+    background: #4a5568;
+  }
+}

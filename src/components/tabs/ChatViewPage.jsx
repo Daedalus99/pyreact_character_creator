@@ -30,6 +30,7 @@ export default function ChatViewPage({ onChangePage }) {
   const { chats, characters, userPersonas } = useAppData();
   const confirm = useConfirmDialog();
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
+  const [currentRequestController, setCurrentRequestController] = useState(null);
 
   const chat = chats.activeEntity;
 
@@ -73,7 +74,13 @@ export default function ChatViewPage({ onChangePage }) {
       speakerLabel: selectedUserPersona?.label ?? "You",
     });
 
-    saveChatMessages([...messages, message]);
+    const newMessages = [...messages, message];
+    saveChatMessages(newMessages);
+    
+    // Automatically request assistant response after user message
+    setTimeout(() => {
+      requestAssistantResponseForMessages(newMessages);
+    }, 100); // Small delay to ensure state is updated
   }
 
   function seedOpeningGreeting() {
@@ -133,19 +140,137 @@ export default function ChatViewPage({ onChangePage }) {
     );
   }
 
-  function extendMessage(message) {
-    console.log("Extend message:", message.id);
+  async function extendMessage(message) {
+    if (isGeneratingResponse) {
+      return;
+    }
+
+    // Determine which character should extend the message
+    let extendingCharacter;
+    if (message.role === "user") {
+      // For user messages, use the selected user persona or default user
+      extendingCharacter = {
+        label: selectedUserPersona?.label || "You",
+        summary: selectedUserPersona?.summary || "User"
+      };
+    } else {
+      // For assistant messages, find the character or use the first one
+      extendingCharacter = selectedCharacters.find(char => 
+        char.id === message.speakerId || char.label === message.speakerLabel
+      ) || selectedCharacters[0];
+      
+      if (!extendingCharacter) {
+        console.warn("Cannot extend message without a character context.");
+        return;
+      }
+    }
+
+    // Create an abort controller for this extend request
+    const controller = new AbortController();
+    setCurrentRequestController(controller);
+
+    // Create a temporary "extending" version of the message
+    const extendingMessageState = {
+      ...message,
+      content: message.content + " [Extending...]",
+      status: "generating",
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Update the message to show extending state
+    const messageIndex = messages.findIndex(m => m.id === message.id);
+    const updatedMessages = [...messages];
+    updatedMessages[messageIndex] = extendingMessageState;
+    saveChatMessages(updatedMessages);
+    setIsGeneratingResponse(true);
+
+    try {
+      // Build context for extending
+      const extendPrompt = {
+        chat: {
+          ...chat,
+          scenario: `Continue the following message naturally and seamlessly. Add more content that flows from what was already said. Do not repeat the existing content, only add to it.`
+        },
+        messages: [
+          {
+            role: message.role,
+            content: `CONTINUE THIS MESSAGE: "${message.content}"`,
+            speakerLabel: message.speakerLabel
+          }
+        ],
+        respondingCharacter: extendingCharacter,
+        userPersona: selectedUserPersona ?? null,
+        characters: selectedCharacters,
+      };
+
+      const response = await fetch("http://127.0.0.1:5000/api/chat/extend", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(extendPrompt),
+        signal: controller.signal, // Add abort signal
+      });
+
+      // Check if the request was cancelled before processing
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Failed to extend message.");
+      }
+
+      // Check again after JSON parsing
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      // Combine original content with extended content
+      const extendedContent = message.content + " " + payload.content.trim();
+      
+      const extendedMessage = {
+        ...message,
+        content: extendedContent,
+        status: "complete",
+        updatedAt: new Date().toISOString(),
+      };
+
+      const finalMessages = [...messages];
+      finalMessages[messageIndex] = extendedMessage;
+      saveChatMessages(finalMessages);
+    } catch (error) {
+      // Don't show error if the request was cancelled
+      if (error.name === 'AbortError' || controller.signal.aborted) {
+        console.log("Extend request was cancelled by user");
+        // Restore the original message
+        const restoredMessages = [...messages];
+        restoredMessages[messageIndex] = message;
+        saveChatMessages(restoredMessages);
+        return;
+      }
+
+      console.warn("Failed to extend message.", error);
+
+      const errorMessage = {
+        ...message,
+        content: message.content + " [Extension failed]",
+        status: "error",
+        updatedAt: new Date().toISOString(),
+      };
+
+      const errorMessages = [...messages];
+      errorMessages[messageIndex] = errorMessage;
+      saveChatMessages(errorMessages);
+    } finally {
+      setIsGeneratingResponse(false);
+      setCurrentRequestController(null);
+    }
   }
 
-  function regenerateMessage(message) {
-    console.log("Regenerate message:", message.id);
-  }
-
-  function cancelResponse(messageId) {
-    console.log("Cancel response:", messageId);
-  }
-
-  async function requestAssistantResponse() {
+  async function regenerateMessage(message) {
     if (isGeneratingResponse) {
       return;
     }
@@ -153,20 +278,21 @@ export default function ChatViewPage({ onChangePage }) {
     const respondingCharacter = selectedCharacters[0];
 
     if (!respondingCharacter) {
-      console.warn("Cannot generate response without a selected character.");
+      console.warn("Cannot regenerate response without a selected character.");
       return;
     }
 
-    const generatingMessage = createChatMessage({
-      role: "assistant",
-      content: "Generating response...",
-      speakerId: respondingCharacter.id,
-      speakerType: "character",
-      speakerLabel: respondingCharacter.label,
+    // Create a temporary "generating" version of the message
+    const regeneratingMessage = {
+      ...message,
+      content: "Regenerating response...",
       status: "generating",
-    });
+      updatedAt: new Date().toISOString(),
+    };
 
-    const messagesWithPlaceholder = [...messages, generatingMessage];
+    // Update the message list to show the regenerating state
+    const messagesBeforeTarget = messages.slice(0, messages.findIndex(m => m.id === message.id));
+    const messagesWithPlaceholder = [...messagesBeforeTarget, regeneratingMessage];
 
     saveChatMessages(messagesWithPlaceholder);
     setIsGeneratingResponse(true);
@@ -179,7 +305,7 @@ export default function ChatViewPage({ onChangePage }) {
         },
         body: JSON.stringify({
           chat,
-          messages,
+          messages: messagesBeforeTarget, // Use messages before the one being regenerated
           respondingCharacter,
           userPersona: selectedUserPersona ?? null,
           characters: selectedCharacters,
@@ -189,7 +315,106 @@ export default function ChatViewPage({ onChangePage }) {
       const payload = await response.json();
 
       if (!response.ok) {
+        throw new Error(payload.error ?? "Failed to regenerate response.");
+      }
+
+      const regeneratedMessage = {
+        ...message,
+        content: payload.content,
+        status: "complete",
+        updatedAt: new Date().toISOString(),
+      };
+
+      saveChatMessages([...messagesBeforeTarget, regeneratedMessage]);
+    } catch (error) {
+      console.warn("Failed to regenerate assistant response.", error);
+
+      const failedMessage = {
+        ...message,
+        content: "Failed to regenerate response. Check that LM Studio is running and the backend can reach it.",
+        status: "error",
+        updatedAt: new Date().toISOString(),
+      };
+
+      saveChatMessages([...messagesBeforeTarget, failedMessage]);
+    } finally {
+      setIsGeneratingResponse(false);
+    }
+  }
+
+  function cancelResponse(messageId) {
+    // Abort the current request if it exists
+    if (currentRequestController) {
+      currentRequestController.abort();
+      setCurrentRequestController(null);
+    }
+
+    // Find the generating message and remove it
+    const filteredMessages = messages.filter(m => m.id !== messageId);
+    saveChatMessages(filteredMessages);
+    setIsGeneratingResponse(false);
+  }
+
+  async function requestAssistantResponseForMessages(sourceMessages) {
+    if (isGeneratingResponse) {
+      return;
+    }
+
+    const respondingCharacter = selectedCharacters[0];
+
+    if (!respondingCharacter) {
+      console.warn("Cannot generate response without a selected character.");
+      return;
+    }
+
+    // Create an abort controller for this request
+    const controller = new AbortController();
+    setCurrentRequestController(controller);
+
+    const generatingMessage = createChatMessage({
+      role: "assistant",
+      content: "Generating response...",
+      speakerId: respondingCharacter.id,
+      speakerType: "character",
+      speakerLabel: respondingCharacter.label,
+      status: "generating",
+    });
+
+    const messagesWithPlaceholder = [...sourceMessages, generatingMessage];
+
+    saveChatMessages(messagesWithPlaceholder);
+    setIsGeneratingResponse(true);
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/chat/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          chat,
+          messages: sourceMessages,
+          respondingCharacter,
+          userPersona: selectedUserPersona ?? null,
+          characters: selectedCharacters,
+        }),
+        signal: controller.signal, // Add abort signal
+      });
+
+      // Check if the request was cancelled before processing the response
+      if (controller.signal.aborted) {
+        return; // Exit early if cancelled
+      }
+
+      const payload = await response.json();
+
+      if (!response.ok) {
         throw new Error(payload.error ?? "Failed to generate response.");
+      }
+
+      // Double-check that we weren't cancelled during the JSON parsing
+      if (controller.signal.aborted) {
+        return;
       }
 
       const completedMessage = {
@@ -199,8 +424,14 @@ export default function ChatViewPage({ onChangePage }) {
         updatedAt: new Date().toISOString(),
       };
 
-      saveChatMessages([...messages, completedMessage]);
+      saveChatMessages([...sourceMessages, completedMessage]);
     } catch (error) {
+      // Don't show error if the request was cancelled
+      if (error.name === 'AbortError' || controller.signal.aborted) {
+        console.log("Request was cancelled by user");
+        return;
+      }
+
       console.warn("Failed to generate assistant response.", error);
 
       const failedMessage = {
@@ -211,10 +442,15 @@ export default function ChatViewPage({ onChangePage }) {
         updatedAt: new Date().toISOString(),
       };
 
-      saveChatMessages([...messages, failedMessage]);
+      saveChatMessages([...sourceMessages, failedMessage]);
     } finally {
       setIsGeneratingResponse(false);
+      setCurrentRequestController(null);
     }
+  }
+
+  async function requestAssistantResponse() {
+    return requestAssistantResponseForMessages(messages);
   }
 
   const lastMessage = messages[messages.length - 1] ?? null;
