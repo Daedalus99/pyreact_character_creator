@@ -87,23 +87,55 @@ def build_chat_prompt_payload(data: dict) -> list[dict[str, str]]:
         if age:
             desc_parts.append(f"Age: {age}")
             
-        # Add key traits (simplified version of the frontend logic)
-        trait_groups = ["gender", "personality", "occupation", "race", "eyeColor", "hairColor"]
-        for group_id in trait_groups:
-            if group_id in selected_options and selected_options[group_id]:
-                # For simplicity, just use the ID with some cleanup
-                value = selected_options[group_id]
-                if isinstance(value, list):
-                    value = ", ".join(value)
+        # Include ALL traits, not just a subset
+        # Skip only artstyle as that's for image generation, not roleplay
+        excluded_groups = ["artstyle"]
+        
+        for group_id, selected_value in selected_options.items():
+            if group_id in excluded_groups or not selected_value:
+                continue
                 
-                # Basic cleanup of the ID to make it readable
-                cleaned_value = value.replace("_", " ").replace(f"{group_id}_", "").title()
-                desc_parts.append(f"{group_id.title()}: {cleaned_value}")
+            # Handle both single values and arrays
+            if isinstance(selected_value, list):
+                # For arrays, clean up each value and join them
+                cleaned_values = []
+                for val in selected_value:
+                    cleaned_val = val.replace(f"{group_id}_", "").replace("_", " ").title()
+                    cleaned_values.append(cleaned_val)
+                cleaned_value = ", ".join(cleaned_values)
+            else:
+                # For single values, clean up the formatting
+                cleaned_value = selected_value.replace(f"{group_id}_", "").replace("_", " ").title()
+            
+            # Create readable group names
+            group_display_names = {
+                "eyeColor": "Eye Color",
+                "hairColor": "Hair Color", 
+                "hairStyle": "Hair Style",
+                "bodyType": "Body Type",
+                "breastSize": "Breast Size",
+                "cockSize": "Cock Size",
+                "buttSize": "Butt Size",
+                "relationshipStatus": "Relationship Status",
+                "typicalOutfit": "Typical Outfit",
+                "notableFeatures": "Notable Features"
+            }
+            
+            group_name = group_display_names.get(group_id, group_id.title())
+            desc_parts.append(f"{group_name}: {cleaned_value}")
         
         # Add custom text
         for group_id, text in custom_text.items():
             if text and text.strip():
-                desc_parts.append(f"{group_id.title()}: {text.strip()}")
+                group_name = group_display_names.get(group_id, group_id.title())
+                desc_parts.append(f"{group_name}: {text.strip()}")
+        
+        # Add lore entries
+        lore_entries = draft.get("loreEntries", [])
+        if lore_entries and isinstance(lore_entries, list):
+            valid_lore = [entry.strip() for entry in lore_entries if entry and entry.strip()]
+            if valid_lore:
+                desc_parts.append(f"Background: {' '.join(valid_lore)}")
                 
         # Add basic summary if no detailed info
         if len(desc_parts) == 1 and character.get("summary"):
@@ -276,15 +308,34 @@ def extend_message():
         desc_parts = []
         selected_options = draft.get("selectedOptionIdsByGroup", {})
         
-        # Add key personality traits for context
-        key_traits = ["personality", "occupation", "gender"]
-        for trait in key_traits:
+        # Include more comprehensive traits for better context
+        # Focus on roleplay-relevant traits for extensions
+        priority_traits = ["personality", "occupation", "gender", "race", "relationshipStatus", "hobbies"]
+        
+        for trait in priority_traits:
             if trait in selected_options and selected_options[trait]:
                 value = selected_options[trait]
                 if isinstance(value, list):
-                    value = ", ".join(value)
-                cleaned_value = value.replace("_", " ").replace(f"{trait}_", "").title()
-                desc_parts.append(f"{trait}: {cleaned_value}")
+                    cleaned_values = []
+                    for val in value:
+                        cleaned_val = val.replace(f"{trait}_", "").replace("_", " ").title()
+                        cleaned_values.append(cleaned_val)
+                    cleaned_value = ", ".join(cleaned_values)
+                else:
+                    cleaned_value = value.replace(f"{trait}_", "").replace("_", " ").title()
+                
+                # Use nice display names
+                display_names = {
+                    "relationshipStatus": "Relationship Status"
+                }
+                trait_name = display_names.get(trait, trait.title())
+                desc_parts.append(f"{trait_name}: {cleaned_value}")
+        
+        # Add any custom personality/background text that's really important
+        custom_text = draft.get("customTextByGroup", {})
+        for group_id, text in custom_text.items():
+            if group_id in ["personality", "background"] and text and text.strip():
+                desc_parts.append(text.strip())
                 
         return "; ".join(desc_parts) if desc_parts else character.get("summary")
     
