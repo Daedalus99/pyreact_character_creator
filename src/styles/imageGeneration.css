@@ -132,24 +132,188 @@
   box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.25);
 }
 
+/* Prompt preview section */
 .prompt-preview {
-  padding: 16px;
-  background: var(--info-background, #1a365d);
-  border: 1px solid var(--info-border, #2c5282);
-  border-radius: 6px;
+    background-color: var(--card-bg);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
 }
 
 .prompt-preview h3 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary, #f8fafc);
-  font-size: 1rem;
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    font-size: 1.1rem;
 }
 
-.prompt-preview p {
+.prompt-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.prompt-text, .art-style-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.prompt-text strong, .art-style-info strong {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.prompt-text p, .art-style-info p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    padding: 0.75rem;
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    border-left: 3px solid var(--accent-color);
+}
+
+.art-style-info p {
+    border-left-color: var(--success-color);
+    font-weight: 500;
+}
+
+.prompt-enhancement {
+  padding: 16px;
+  background: var(--card-background, #2d3748);
+  border: 1px solid var(--border-color, #4a5568);
+  border-radius: 6px;
+  margin-top: 16px;
+}
+
+.enhancement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.enhancement-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.enhancement-controls select {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color, #4a5568);
+  background: var(--input-background, #1a202c);
+  color: var(--text-primary, #f8fafc);
+  font-size: 0.875rem;
+}
+
+.enhance-button {
+  padding: 6px 12px;
+  background: var(--accent-color, #3182ce);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.enhance-button:hover:not(:disabled) {
+  background: var(--accent-hover, #2c5aa0);
+}
+
+.enhance-button:disabled {
+  background: var(--disabled-color, #4a5568);
+  cursor: not-allowed;
+}
+
+.enhanced-prompt-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color, #4a5568);
+}
+
+.enhanced-prompt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.enhanced-prompt-header label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary, #f8fafc);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.clear-enhanced-button {
+  padding: 4px 8px;
+  background: var(--danger-color, #e53e3e);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.clear-enhanced-button:hover {
+  background: var(--danger-hover, #c53030);
+}
+
+.enhanced-prompt-text {
+  margin-top: 8px;
+}
+
+.enhanced-prompt-text strong {
+  color: var(--text-primary, #f8fafc);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.enhanced-prompt-text p {
   margin: 0;
-  color: var(--text-secondary, #e2e8f0);
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid;
   font-size: 0.875rem;
   line-height: 1.4;
+}
+
+.active-prompt {
+  background: var(--success-background, #1a365d);
+  border-color: var(--success-border, #3182ce);
+  color: var(--text-primary, #f8fafc);
+}
+
+.inactive-prompt {
+  background: var(--muted-background, #2d3748);
+  border-color: var(--muted-border, #4a5568);
+  color: var(--text-muted, #a0aec0);
+  opacity: 0.7;
+}
+
+.enhancement-info {
+  margin-top: 12px;
+  padding: 8px;
+  background: var(--info-background, #1a365d);
+  border: 1px solid var(--info-border, #2c5282);
+  border-radius: 4px;
+}
+
+.enhancement-info small {
+  color: var(--text-secondary, #cbd5e0);
+  font-style: italic;
 }
 
 .generation-actions {
@@ -252,7 +416,9 @@
 }
 
 .generated-image-display img {
-  max-width: 100%;
+  max-width: 400px;
+  max-height: 600px;
+  width: auto;
   height: auto;
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);

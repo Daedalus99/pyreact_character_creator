@@ -148,10 +148,10 @@ export default function ChatViewPage({ onChangePage }) {
     // Determine which character should extend the message
     let extendingCharacter;
     if (message.role === "user") {
-      // For user messages, use the selected user persona or default user
-      extendingCharacter = {
-        label: selectedUserPersona?.label || "You",
-        summary: selectedUserPersona?.summary || "User"
+      // For user messages, use the full selected user persona data
+      extendingCharacter = selectedUserPersona || {
+        label: "You",
+        summary: "User"
       };
     } else {
       // For assistant messages, find the character or use the first one
@@ -185,13 +185,26 @@ export default function ChatViewPage({ onChangePage }) {
     setIsGeneratingResponse(true);
 
     try {
-      // Build context for extending
+      // Get conversation context (last few messages before the one being extended)
+      const messageIndex = messages.findIndex(msg => msg.id === message.id);
+      const contextMessages = messageIndex > 0 ? 
+        messages.slice(Math.max(0, messageIndex - 3), messageIndex) : // Last 3 messages before this one
+        [];
+
+      // Build the extend prompt with conversation context
       const extendPrompt = {
         chat: {
           ...chat,
           scenario: `Continue the following message naturally and seamlessly. Add more content that flows from what was already said. Do not repeat the existing content, only add to it.`
         },
         messages: [
+          // Add conversation context first
+          ...contextMessages.map(msg => ({
+            role: msg.role,
+            content: msg.content,
+            speakerLabel: msg.speakerLabel
+          })),
+          // Then the message to extend
           {
             role: message.role,
             content: `CONTINUE THIS MESSAGE: "${message.content}"`,

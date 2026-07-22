@@ -80,14 +80,14 @@ For development, I previously used a Vite dev proxy so the frontend could call /
 - Support a randomize-character button for debugging and fast testing.
 - The creation will be data-driven, where character creation steps are defined by (configurable in code) option groups rather than being hardcoded.
 - It should support direct character fields such as name (textbox input) and age (slider).
-- Supports selectable option groups such as artstyle, gender, race, eye color, hair color, hairstyle, body type, breast size, cock size, butt size, personality traits, relationship status, occupation, hobbies, kinks, typical outfit(s), other notable features, and misccellanious lore or fun facts.
+- Supports selectable option groups such as gender, race, eye color, hair color, hairstyle, body type, breast size, cock size, butt size, personality traits, relationship status, occupation, hobbies, kinks, typical outfit(s), other notable features, and miscellaneous lore or fun facts.
 - Each selectable option card must have display text, but can also have a thumbnail and/or a text description.
 - Some option groups should support custom text entries, so the user can add their own custom options.
 - Support min/max selectable rules per option group, so the user can't select too many or too few options in each group.
 - Support option selection validation, so the character cannot be completed until all required visible fields are valid.
 - Support gender-dependent option visibility. (Hidden option groups should not block validation.)
 - Hidden option group values should be cleared or ignored so stale hidden selections do not leak into saved character summaries or prompts.
-- Keep art style as a character-creation option, but exclude it from normal text summaries and roleplay prompts. It should be saved exclusively for image generation use.
+- Art style is now handled in the image generation settings rather than character creation, allowing users to experiment with different styles for the same character without recreating them.
 - Include "back", "next", and "cancel" buttons that let the user navigate through the creation step pages, or return to the main Characters tab without saving.
 - Navigation buttons should be anchored to the top of the window rather than the creation step pages, so the user doesn't have to scroll to the top of the screen each time they want to navigate.
 

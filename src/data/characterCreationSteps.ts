@@ -17,7 +17,6 @@ export const creationStepBasic: CreationStep = {
   title: "Basic Info",
   optionGroups: [
     allOptionGroups.genderOptionGroup,
-    allOptionGroups.artstyleOptionGroup,
   ],
 };
 

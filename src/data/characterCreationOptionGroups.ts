@@ -41,6 +41,8 @@ export const genderOptionGroup = {
   ],
 };
 
+// Art style moved to image generation settings - no longer part of character creation
+/* 
 export const artstyleOptionGroup: OptionGroup = {
   id: "artstyle",
   title: "Artstyle",
@@ -62,6 +64,7 @@ export const artstyleOptionGroup: OptionGroup = {
     },
   ],
 };
+*/
 
 export const raceOptionGroup: OptionGroup = {
   id: "race",
@@ -870,7 +873,6 @@ export const featuresOptionGroup: OptionGroup = {
 
 export const allOptionGroups = {
   genderOptionGroup,
-  artstyleOptionGroup,
   raceOptionGroup,
   eyesOptionGroup,
   hairstyleOptionGroup,
@@ -890,7 +892,6 @@ export const allOptionGroups = {
 
 export const visualOptionGroups = {
   genderOptionGroup,
-  artstyleOptionGroup,
   raceOptionGroup,
   eyesOptionGroup,
   hairstyleOptionGroup,

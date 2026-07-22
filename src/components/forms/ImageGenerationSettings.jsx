@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import BasePage from '../tabs/BasePage';
+import BatchImageResults from './BatchImageResults';
 
 const POSE_OPTIONS = [
     { id: 'standing', label: 'Standing' },
@@ -51,17 +52,38 @@ const SCENERY_OPTIONS = [
     { id: 'garden', label: 'Garden' }
 ];
 
+const ART_STYLE_OPTIONS = [
+    { id: 'anime', label: 'Anime' },
+    { id: 'realistic', label: 'Realistic' },
+    { id: 'cartoon', label: 'Cartoon' },
+    { id: 'digital_art', label: 'Digital Art' },
+    { id: 'oil_painting', label: 'Oil Painting' },
+    { id: 'watercolor', label: 'Watercolor' },
+    { id: 'sketch', label: 'Sketch' },
+    { id: 'pixel_art', label: 'Pixel Art' }
+];
+
 export default function ImageGenerationSettings({ entity, entityType, onBack }) {
     const [settings, setSettings] = useState({
         pose: '',
         expression: '',
         outfit: '',
         scenery: '',
+        artStyle: 'anime', // Default to anime
+        shape: 'portrait', // Default to portrait for character images
+        batchSize: 2, // Default batch size
         customPrompt: ''
     });
     const [generatedImages, setGeneratedImages] = useState([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentImage, setCurrentImage] = useState(null);
+    
+    // Prompt enhancement state
+    const [enhancedPrompt, setEnhancedPrompt] = useState('');
+    const [isEnhancing, setIsEnhancing] = useState(false);
+    const [enhancementType, setEnhancementType] = useState('normal');
+    const [useEnhancedPrompt, setUseEnhancedPrompt] = useState(false);
+    const [showBatchResults, setShowBatchResults] = useState(false);
 
     useEffect(() => {
         // Load existing images for this entity
@@ -94,38 +116,138 @@ export default function ImageGenerationSettings({ entity, entityType, onBack }) 
     function buildImagePrompt() {
         const parts = [];
         
-        // Add entity description if available
-        if (entity.summary || entity.description) {
-            parts.push(entity.summary || entity.description);
+        // Extract comprehensive character visual data
+        const draft = entity.draft || {};
+        const selectedOptions = draft.selectedOptionIdsByGroup || {};
+        
+        // Build character description focusing on visual traits
+        const visualParts = [];
+        
+        // Combine age and gender into natural phrases (no character name)
+        const age = draft.age;
+        const gender = selectedOptions.gender;
+        
+        if (age && gender) {
+            let cleanGender = gender.replace(/gender_/g, '').replace(/_/g, ' ');
+            // Handle special cases for better grammar
+            if (cleanGender === 'androgynous') {
+                cleanGender = 'androgynous person';
+            }
+            visualParts.push(`${age} year old ${cleanGender}`);
+        } else if (age) {
+            visualParts.push(`${age} years old`);
+        } else if (gender) {
+            let cleanGender = gender.replace(/gender_/g, '').replace(/_/g, ' ');
+            if (cleanGender === 'androgynous') {
+                cleanGender = 'androgynous person';
+            }
+            visualParts.push(cleanGender);
         }
         
-        // Add entity name
-        if (entity.label) {
-            parts.push(`character named ${entity.label}`);
+        // Physical appearance traits (excluding gender since it's handled above)
+        // Use the actual key names from the character data
+        const visualTraits = {
+            race: selectedOptions.race,
+            eyes: selectedOptions.eyes,
+            hair_color: selectedOptions.hair_color,
+            hair_style: selectedOptions.hair_style,
+            body_type: selectedOptions.body_type,
+            breast_size: selectedOptions.breast_size,
+            cock_size: selectedOptions.cock_size,
+            butt_size: selectedOptions.butt_size,
+            notable_features: selectedOptions.notable_features
+        };
+        
+        // Clean and format visual traits
+        Object.entries(visualTraits).forEach(([trait, value]) => {
+            if (value) {
+                let cleanValue;
+                if (Array.isArray(value)) {
+                    cleanValue = value.map(v => {
+                        // Remove common prefixes and clean up
+                        return v.replace(new RegExp(`${trait}_`, 'g'), '')
+                                .replace(/^(haircolor_|bodytype_|buttsize_|breast_size_|cock_size_|butt_size_|hair_color_|hair_style_|body_type_|notable_features_|eyes_|race_)/g, '')
+                                .replace(/_/g, ' ');
+                    }).join(', ');
+                } else {
+                    // Remove common prefixes and clean up
+                    cleanValue = value.replace(new RegExp(`${trait}_`, 'g'), '')
+                                     .replace(/^(haircolor_|bodytype_|buttsize_|breast_size_|cock_size_|butt_size_|hair_color_|hair_style_|body_type_|notable_features_|eyes_|race_)/g, '')
+                                     .replace(/_/g, ' ');
+                }
+                
+                // Format for image prompts
+                let formattedValue;
+                switch(trait) {
+                    case 'eyes':
+                        formattedValue = `${cleanValue} eyes`;
+                        break;
+                    case 'hair_color':
+                        formattedValue = `${cleanValue} hair`;
+                        break;
+                    case 'hair_style':
+                        formattedValue = `${cleanValue} hairstyle`;
+                        break;
+                    case 'body_type':
+                        formattedValue = `${cleanValue} build`;
+                        break;
+                    case 'breast_size':
+                        formattedValue = `${cleanValue} breasts`;
+                        break;
+                    case 'cock_size':
+                        formattedValue = `${cleanValue} cock`;
+                        break;
+                    case 'butt_size':
+                        formattedValue = `${cleanValue} butt`;
+                        break;
+                    case 'notable_features':
+                        formattedValue = cleanValue;
+                        break;
+                    default:
+                        formattedValue = cleanValue;
+                }
+                
+                visualParts.push(formattedValue);
+            }
+        });
+        
+        // Add default outfit from character data if no override
+        // Check both possible key names for outfit
+        const outfitKey = selectedOptions.typical_outfit || selectedOptions.outfit || selectedOptions.typicalOutfit;
+        if (!settings.outfit && outfitKey) {
+            const outfit = outfitKey.replace(/typical_outfit_|outfit_|typicalOutfit_/g, '').replace(/_/g, ' ');
+            visualParts.push(`wearing ${outfit}`);
         }
-
-        // Add selected options
+        
+        // Build main character description
+        if (visualParts.length > 0) {
+            parts.push(visualParts.join(', '));
+        }
+        
+        // Add pose/expression/outfit overrides from generation settings
         if (settings.pose) {
             const pose = POSE_OPTIONS.find(p => p.id === settings.pose);
-            if (pose) parts.push(pose.label);
+            if (pose) parts.push(pose.label.toLowerCase());
         }
 
         if (settings.expression) {
             const expression = EXPRESSION_OPTIONS.find(e => e.id === settings.expression);
-            if (expression) parts.push(`${expression.label} expression`);
+            if (expression) parts.push(`${expression.label.toLowerCase()} expression`);
         }
 
         if (settings.outfit) {
             const outfit = OUTFIT_OPTIONS.find(o => o.id === settings.outfit);
             if (outfit && outfit.id !== 'none') {
-                parts.push(`wearing ${outfit.label}`);
+                parts.push(`wearing ${outfit.label.toLowerCase()}`);
+            } else if (outfit && outfit.id === 'none') {
+                parts.push('nude');
             }
         }
 
         if (settings.scenery && settings.scenery !== 'none') {
             const scenery = SCENERY_OPTIONS.find(s => s.id === settings.scenery);
             if (scenery) {
-                parts.push(`in ${scenery.label}`);
+                parts.push(`${scenery.label.toLowerCase()} background`);
             }
         }
 
@@ -133,43 +255,76 @@ export default function ImageGenerationSettings({ entity, entityType, onBack }) 
         if (settings.customPrompt.trim()) {
             parts.push(settings.customPrompt.trim());
         }
-
-        // Add art style if available
-        if (entity.artstyle) {
-            parts.push(`${entity.artstyle} art style`);
-        }
+        
+        // Add quality and style modifiers
+        parts.push('high quality', 'detailed', 'masterpiece');
 
         return parts.join(', ');
     }
 
+    function getArtStyle() {
+        // Return the selected art style from settings
+        return settings.artStyle || 'anime';
+    }
+
+    async function enhancePrompt() {
+        const currentPrompt = buildImagePrompt();
+        if (!currentPrompt.trim() || isEnhancing) {
+            return;
+        }
+
+        setIsEnhancing(true);
+        
+        try {
+            console.log('Enhancing prompt:', currentPrompt);
+            console.log('Enhancement type:', enhancementType);
+            
+            const response = await fetch('http://127.0.0.1:5000/api/prompt/enhance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt: currentPrompt,
+                    type: enhancementType
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to enhance prompt');
+            }
+
+            if (result.success && result.enhancedPrompt) {
+                setEnhancedPrompt(result.enhancedPrompt);
+                setUseEnhancedPrompt(true); // Automatically enable the enhanced prompt
+                console.log('Prompt enhanced successfully:', result.enhancedPrompt);
+                
+                if (result.isMock) {
+                    console.log('Note: This is a mock enhancement as the actual API was unavailable');
+                }
+            } else {
+                throw new Error('No enhanced prompt received');
+            }
+        } catch (error) {
+            console.error('Prompt enhancement failed:', error);
+            alert(`Failed to enhance prompt: ${error.message}`);
+        } finally {
+            setIsEnhancing(false);
+        }
+    }
     async function generateImage() {
         if (isGenerating) return;
 
         setIsGenerating(true);
+        setCurrentImage(null);
         
-        try {
-            const prompt = buildImagePrompt();
-            
-            // For now, we'll simulate image generation
-            // In a real implementation, this would call PixAI.art or Perchance
-            const mockImage = {
-                id: crypto.randomUUID(),
-                prompt,
-                url: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' fill='%23e2e8f0'/%3E%3Ctext x='200' y='180' text-anchor='middle' fill='%23475569' font-size='14' font-family='sans-serif'%3EGenerated Image%3C/text%3E%3Ctext x='200' y='200' text-anchor='middle' fill='%2364748b' font-size='10' font-family='sans-serif'%3E${entity.label}%3C/text%3E%3Ctext x='200' y='220' text-anchor='middle' fill='%2394a3b8' font-size='8' font-family='sans-serif'%3E${new Date().toLocaleString()}%3C/text%3E%3C/svg%3E`,
-                createdAt: new Date().toISOString(),
-                settings: { ...settings }
-            };
-
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            setCurrentImage(mockImage);
-        } catch (error) {
-            console.error('Image generation failed:', error);
-            alert('Failed to generate image. Please check your settings and try again.');
-        } finally {
-            setIsGenerating(false);
-        }
+        // Immediately switch to batch results page for real-time progress
+        setShowBatchResults(true);
+        
+        // The actual generation will be handled by BatchImageResults component
+        // This function now just triggers the switch to batch results page
     }
 
     function saveCurrentImage() {
@@ -195,6 +350,44 @@ export default function ImageGenerationSettings({ entity, entityType, onBack }) 
         // This would update the entity's primary image
         console.log('Setting as primary image:', image);
         // You could implement this by updating the entity in the app data
+    }
+
+    // Helper functions for BatchImageResults
+    const handleBackFromBatch = () => {
+        setShowBatchResults(false);
+        setIsGenerating(false);
+    };
+
+    const handleSaveImageFromBatch = (imageData) => {
+        // Add the image to our generated images list
+        const newImages = [...generatedImages, imageData];
+        setGeneratedImages(newImages);
+        
+        // Save to localStorage
+        try {
+            localStorage.setItem(`images:${entity.id}`, JSON.stringify(newImages));
+        } catch (error) {
+            console.warn('Failed to save images to localStorage:', error);
+        }
+    };
+
+    // Show batch results page during generation
+    if (showBatchResults) {
+        const prompt = useEnhancedPrompt && enhancedPrompt ? enhancedPrompt : buildImagePrompt();
+        const artStyle = getArtStyle();
+        
+        return (
+            <BatchImageResults
+                entity={entity}
+                prompt={prompt}
+                artStyle={artStyle}
+                shape={settings.shape}
+                batchSize={settings.batchSize}
+                onBack={handleBackFromBatch}
+                onRetry={() => setShowBatchResults(true)}
+                onSaveImage={handleSaveImageFromBatch}
+            />
+        );
     }
 
     if (currentImage) {
@@ -255,7 +448,6 @@ export default function ImageGenerationSettings({ entity, entityType, onBack }) 
                         <div className="entity-info">
                             <p><strong>Name:</strong> {entity.label}</p>
                             {entity.summary && <p><strong>Description:</strong> {entity.summary}</p>}
-                            {entity.artstyle && <p><strong>Art Style:</strong> {entity.artstyle}</p>}
                         </div>
                     </section>
 
@@ -326,6 +518,49 @@ export default function ImageGenerationSettings({ entity, entityType, onBack }) 
                                     ))}
                                 </select>
                             </div>
+
+                            <div className="option-group">
+                                <label htmlFor="artStyle">Art Style:</label>
+                                <select 
+                                    id="artStyle"
+                                    value={settings.artStyle}
+                                    onChange={(e) => updateSetting('artStyle', e.target.value)}
+                                >
+                                    {ART_STYLE_OPTIONS.map(option => (
+                                        <option key={option.id} value={option.id}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="option-group">
+                                <label htmlFor="shape">Image Shape:</label>
+                                <select 
+                                    id="shape"
+                                    value={settings.shape}
+                                    onChange={(e) => updateSetting('shape', e.target.value)}
+                                >
+                                    <option value="portrait">Portrait (512×768)</option>
+                                    <option value="square">Square (768×768)</option>
+                                    <option value="landscape">Landscape (768×512)</option>
+                                </select>
+                            </div>
+
+                            <div className="option-group">
+                                <label htmlFor="batchSize">Batch Size:</label>
+                                <select 
+                                    id="batchSize"
+                                    value={settings.batchSize}
+                                    onChange={(e) => updateSetting('batchSize', parseInt(e.target.value))}
+                                >
+                                    <option value={1}>1 image</option>
+                                    <option value={2}>2 images</option>
+                                    <option value={3}>3 images</option>
+                                    <option value={4}>4 images</option>
+                                    <option value={5}>5 images</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div className="custom-prompt">
@@ -341,7 +576,76 @@ export default function ImageGenerationSettings({ entity, entityType, onBack }) 
 
                         <div className="prompt-preview">
                             <h3>Generated Prompt Preview:</h3>
-                            <p>{buildImagePrompt() || 'Select options to see prompt preview...'}</p>
+                            <div className="prompt-content">
+                                <div className="prompt-text">
+                                    <strong>Prompt:</strong>
+                                    <p>{buildImagePrompt() || 'Select options to see prompt preview...'}</p>
+                                </div>
+                                                               
+                                <div className="prompt-enhancement">
+                                    <div className="enhancement-header">
+                                        <strong>🧠 Prompt Enhancement (Optional):</strong>
+                                        <div className="enhancement-controls">
+                                            <select 
+                                                value={enhancementType}
+                                                onChange={(e) => setEnhancementType(e.target.value)}
+                                                disabled={isEnhancing}
+                                            >
+                                                <option value="normal">Normal prompt</option>
+                                                <option value="random">Prompt with {'{Random|Curly}'} blocks</option>
+                                            </select>
+                                            <button 
+                                                type="button"
+                                                className="enhance-button"
+                                                onClick={enhancePrompt}
+                                                disabled={isEnhancing || !buildImagePrompt().trim()}
+                                            >
+                                                {isEnhancing ? 'Enhancing...' : '🧠 Enhance'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    {enhancedPrompt && (
+                                        <div className="enhanced-prompt-section">
+                                            <div className="enhanced-prompt-header">
+                                                <label>
+                                                    <input 
+                                                        type="checkbox"
+                                                        checked={useEnhancedPrompt}
+                                                        onChange={(e) => setUseEnhancedPrompt(e.target.checked)}
+                                                    />
+                                                    Use Enhanced Prompt
+                                                </label>
+                                                <button 
+                                                    type="button"
+                                                    className="clear-enhanced-button"
+                                                    onClick={() => {
+                                                        setEnhancedPrompt('');
+                                                        setUseEnhancedPrompt(false);
+                                                    }}
+                                                    title="Clear enhanced prompt"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                            <div className="enhanced-prompt-text">
+                                                <strong>Enhanced Prompt:</strong>
+                                                <p className={useEnhancedPrompt ? 'active-prompt' : 'inactive-prompt'}>
+                                                    {enhancedPrompt}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="enhancement-info">
+                                        <small>
+                                            💡 {enhancedPrompt ? 
+                                                (useEnhancedPrompt ? 'Enhanced prompt will be used for generation.' : 'Original prompt will be used.') :
+                                                'Click "Enhance" to improve your prompt with Perchance\'s AI enhancement tool.'}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </section>
 
@@ -352,7 +656,8 @@ export default function ImageGenerationSettings({ entity, entityType, onBack }) 
                             onClick={generateImage}
                             disabled={isGenerating}
                         >
-                            {isGenerating ? 'Generating...' : 'Generate Image'}
+                            {isGenerating ? 'Generating...' : 
+                             settings.batchSize > 1 ? `Generate ${settings.batchSize} Images` : 'Generate Image'}
                         </button>
                         
                         <button type="button" onClick={onBack}>
