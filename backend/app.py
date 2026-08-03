@@ -2,10 +2,11 @@ import os
 import requests
 import asyncio
 import base64
+import urllib.parse
+from pathlib import Path
+from io import BytesIO
+from urllib.parse import urlencode
 from flask import Flask, jsonify, request
-from flask_cors import CORS
-from perchance import ImageGenerator
-from perchance_website_automation import generate_images_via_website
 
 LM_STUDIO_URL = os.getenv(
     "LM_STUDIO_URL",
@@ -18,7 +19,6 @@ LM_STUDIO_MODEL = os.getenv(
 )
 
 app = Flask(__name__)
-CORS(app, origins=["http://127.0.0.1:5173"])
 
 # Store settings in memory
 app_settings = {}
@@ -590,31 +590,32 @@ def generate_image():
 
 
 async def call_lm_studio(messages):
-    """Make an async call to LM Studio API"""
-    import aiohttp
-    
+    """Make a synchronous call to LM Studio API"""
     try:
-        async with aiohttp.ClientSession() as session:
-            payload = {
-                "model": LM_STUDIO_MODEL,
-                "messages": messages,
-                "temperature": 0.7,  # Slightly higher for creativity
-                "max_tokens": 1000,  # More tokens for detailed prompts
-                "stream": False,
-            }
+        payload = {
+            "model": LM_STUDIO_MODEL,
+            "messages": messages,
+            "temperature": 0.7,
+            "max_tokens": 1000,
+            "stream": False,
+        }
+        
+        response = requests.post(LM_STUDIO_URL, json=payload, timeout=120)
+        
+        if response.status_code == 200:
+            result = response.json()
+            content = (
+                result.get("choices", [{}])[0]
+                .get("message", {})
+                .get("content", "")
+                .strip()
+            )
+            return content
+        else:
+            raise Exception(f"LM Studio API returned status {response.status_code}")
             
-            async with session.post(LM_STUDIO_URL, json=payload, timeout=120) as response:
-                if response.status == 200:
-                    result = await response.json()
-                    content = (
-                        result.get("choices", [{}])[0]
-                        .get("message", {})
-                        .get("content", "")
-                        .strip()
-                    )
-                    return content
-                else:
-                    raise Exception(f"LM Studio API returned status {response.status}")
+    except Exception as e:
+        raise Exception(f"LM Studio API call failed: {e}")
                     
     except Exception as e:
         app.logger.error(f"LM Studio API call failed: {e}")
@@ -728,68 +729,9 @@ IMPORTANT: Return ONLY the enhanced prompt. Do not include explanations, notes, 
 
 
 async def enhance_perchance_prompt(prompt, prompt_type="normal"):
-    """Enhance a prompt using Perchance's TextGenerator with custom instructions"""
-    from perchance import TextGenerator
-    
-    # Simpler, more direct instructions that work better with text generators
-    NORMAL_PROMPT_ENHANCER_INSTRUCTION = """Enhance this image prompt by adding rich visual details, professional photography terms, atmospheric descriptions, and technical quality specifications. Make it extremely detailed and vivid.
-
-{prompt}
-
-Enhanced version:"""
-
-    CURLY_BLOCK_PROMPT_ENHANCER_INSTRUCTION = """Enhance this image prompt by adding rich visual details with random choice variations using curly brackets like {{option1|option2|option3}}. Include technical specs, atmospheric details, and varied descriptive options.
-
-{prompt}
-
-Enhanced version with choices:"""
-    
-    try:
-        # Choose the appropriate instruction based on prompt_type
-        if prompt_type == "random":
-            instruction = CURLY_BLOCK_PROMPT_ENHANCER_INSTRUCTION.format(prompt=prompt)
-        else:
-            instruction = NORMAL_PROMPT_ENHANCER_INSTRUCTION.format(prompt=prompt)
-        
-        app.logger.info(f"Using Perchance TextGenerator to enhance prompt: {prompt}")
-        app.logger.info(f"Enhancement type: {prompt_type}")
-        
-        async with TextGenerator() as gen:
-            enhanced_text = ""
-            
-            # Stream the text generation and collect the result
-            async for text_chunk in gen.stream(
-                prompt=instruction,
-                timeout=45.0  # Longer timeout for detailed responses
-            ):
-                enhanced_text += text_chunk
-                
-                # More generous limit for detailed enhancements, but prevent runaway generation
-                if len(enhanced_text) > 2000:  # Much higher limit for detailed prompts
-                    break
-                
-                # Stop if we detect a natural ending (double newline, period followed by newline, etc.)
-                if enhanced_text.endswith('\n\n') or enhanced_text.endswith('.\n'):
-                    break
-            
-            # Clean up the response
-            enhanced_text = enhanced_text.strip()
-            
-            if enhanced_text:
-                app.logger.info(f"Prompt enhanced successfully: {enhanced_text[:100]}...")
-                return {
-                    "success": True,
-                    "originalPrompt": prompt,
-                    "enhancedPrompt": enhanced_text,
-                    "type": prompt_type
-                }
-            else:
-                raise Exception("Empty response from TextGenerator")
-                
-    except Exception as e:
-        app.logger.error(f"Perchance TextGenerator enhancement failed: {e}")
-        # Fallback to mock enhancement
-        return await enhance_prompt_fallback(prompt, prompt_type)
+    """Enhance a prompt using simple fallback enhancement"""
+    app.logger.warning("Perchance TextGenerator disabled, using fallback enhancement")
+    return await enhance_prompt_fallback(prompt, prompt_type)
 
 
 async def enhance_prompt_fallback(prompt, prompt_type="normal"):
@@ -813,58 +755,265 @@ async def enhance_prompt_fallback(prompt, prompt_type="normal"):
     }
 
 
-async def generate_perchance_image_original(prompt, negative_prompt="", shape="portrait"):
-    """Generate image using Perchance ImageGenerator - Original working version"""
-    from perchance import ImageGenerator
-    app.logger.info("Using original Perchance function to test PyPI version")
-
-    async with ImageGenerator() as gen:
-        app.logger.info("Starting Perchance image generation...")
+async def generate_perchance_image(prompt, negative_prompt="", shape="portrait"):
+    """Generate image using Perchance with Playwright browser automation"""
+    app.logger.info(f"Generating image via Perchance with browser automation: {prompt}")
+    
+    try:
+        # Import Playwright and PIL here to avoid import errors if not installed
+        try:
+            from playwright.async_api import async_playwright
+            from PIL import Image
+        except ImportError as e:
+            raise Exception(f"Required packages not installed: {e}. Run: pip install playwright pillow && playwright install chromium")
         
-        result = await gen.image(
-            prompt,
-            negative_prompt=negative_prompt,
-            shape=shape,
-            guidance_scale=7.0,
-        )
-
-        app.logger.info(f"Image generated successfully. ID: {result.image_id}, Extension: {result.file_extension}")
+        # Format the prompt with resolution based on shape
+        resolution_map = {
+            "portrait": "512x768",
+            "landscape": "768x512", 
+            "square": "512x512"
+        }
+        resolution = resolution_map.get(shape, "512x512")
         
-        # Download the image
-        binary = await result.download()
-        image_bytes = binary.getvalue() if hasattr(binary, 'getvalue') else binary.read()
-        app.logger.info(f"Download successful, got {len(image_bytes)} bytes")
+        # Add resolution to prompt if not already present
+        if "resolution:::" not in prompt:
+            full_prompt = f"{prompt}(resolution:::{resolution})"
+        else:
+            full_prompt = prompt
+            
+        # Construct the URL using proper URL encoding
+        url = "https://perchance.org/imageapi?" + urlencode({"prompt": full_prompt})
+        app.logger.info(f"Loading Perchance page: {url}")
+        
+        async with async_playwright() as playwright:
+            # Use a real browser user agent and other settings to avoid detection
+            browser = await playwright.chromium.launch(
+                headless=True,
+                args=[
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-blink-features=AutomationControlled'
+                ]
+            )
+            context = await browser.new_context(
+                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                viewport={'width': 1920, 'height': 1080},
+                locale='en-US'
+            )
+            page = await context.new_page()
+            
+            # Set additional headers to look more like a real browser
+            await page.set_extra_http_headers({
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+            })
+            
+            try:
+                # Navigate to the page
+                await page.goto(url, wait_until="domcontentloaded", timeout=120000)
+                app.logger.info("Page loaded, checking for protection...")
+                
+                # First, let's see what's actually on the page
+                page_title = await page.title()
+                app.logger.info(f"Page title: {page_title}")
+                
+                # Check if we hit Cloudflare protection
+                if "just a moment" in page_title.lower() or "checking your browser" in page_title.lower():
+                    app.logger.info("Detected Cloudflare protection, waiting for it to pass...")
+                    
+                    # Wait for the protection to complete (up to 30 seconds)
+                    try:
+                        await page.wait_for_function(
+                            """() => {
+                                return document.title.toLowerCase().indexOf('just a moment') === -1 &&
+                                       document.title.toLowerCase().indexOf('checking') === -1;
+                            }""",
+                            timeout=30000
+                        )
+                        final_title = await page.title()
+                        app.logger.info(f"Protection passed, new title: {final_title}")
+                    except Exception as e:
+                        app.logger.warning(f"Cloudflare protection didn't clear: {e}")
+                        # Try to continue anyway
+                        pass
+                
+                # Wait for some content to load
+                await page.wait_for_timeout(3000)  # Wait 3 seconds
+                
+                # Check for any images that exist first
+                existing_images = await page.evaluate(
+                    """
+                    () => {
+                        const images = [...document.images];
+                        return images.map(img => ({
+                            src: img.src.substring(0, 100),
+                            complete: img.complete,
+                            naturalWidth: img.naturalWidth,
+                            naturalHeight: img.naturalHeight,
+                        }));
+                    }
+                    """
+                )
+                app.logger.info(f"Found {len(existing_images)} images on page: {existing_images}")
+                
+                # Try a more relaxed approach - wait for ANY image to appear, then give it time to fully load
+                try:
+                    # First wait for any image to appear
+                    await page.wait_for_selector("img", timeout=60000)
+                    app.logger.info("Found at least one image element")
+                    
+                    # Give it time for the actual image generation to complete
+                    await page.wait_for_timeout(10000)  # Wait 10 seconds for generation
+                    
+                    # Now look for the largest image that's actually loaded
+                    image_result = await page.wait_for_function(
+                        """
+                        () => {
+                            const images = [...document.images]
+                                .filter(img =>
+                                    img.complete &&
+                                    img.naturalWidth >= 100 &&  // Lowered threshold
+                                    img.naturalHeight >= 100 &&
+                                    !img.src.includes('icon') &&  // Exclude icons
+                                    !img.src.includes('logo')     // Exclude logos
+                                )
+                                .sort(
+                                    (a, b) =>
+                                        b.naturalWidth * b.naturalHeight -
+                                        a.naturalWidth * a.naturalHeight
+                                );
 
-        mime_type = f"image/{result.file_extension}"
-        base64_image = base64.b64encode(image_bytes).decode("utf-8")
+                            if (images.length > 0) {
+                                console.log('Found images:', images.map(img => ({
+                                    src: img.src.substring(0, 50),
+                                    size: img.naturalWidth + 'x' + img.naturalHeight
+                                })));
+                                return images[0].currentSrc || images[0].src;
+                            }
+                            return false;
+                        }
+                        """,
+                        timeout=60000,  # Reduced timeout
+                    )
+                    image_src = await image_result.json_value()
+                    
+                except Exception as e:
+                    app.logger.warning(f"Failed to find generated image: {e}")
+                    # Fallback: just grab the largest image on the page
+                    all_images = await page.evaluate(
+                        """
+                        () => {
+                            const images = [...document.images]
+                                .filter(img => img.complete && img.naturalWidth > 0)
+                                .sort((a, b) => 
+                                    (b.naturalWidth * b.naturalHeight) - 
+                                    (a.naturalWidth * a.naturalHeight)
+                                );
+                            return images.length > 0 ? images[0].src : null;
+                        }
+                        """
+                    )
+                    if all_images:
+                        image_src = all_images
+                        app.logger.info(f"Using fallback image: {image_src[:100]}...")
+                    else:
+                        raise Exception("No images found on the page")
+                
+                if not isinstance(image_src, str):
+                    raise Exception("Perchance did not produce an image URL")
+                
+                app.logger.info(f"Found generated image: {image_src[:100]}...")
+                
+                # Handle different image source types
+                if image_src.startswith("data:"):
+                    # Data URL (base64 encoded)
+                    header, encoded_data = image_src.split(",", 1)
+                    if ";base64" in header:
+                        image_bytes = base64.b64decode(encoded_data)
+                    else:
+                        from urllib.parse import unquote_to_bytes
+                        image_bytes = unquote_to_bytes(encoded_data)
+                    app.logger.info("Extracted image from data URL")
+                    
+                elif image_src.startswith("blob:"):
+                    # Blob URL - need to convert to data URL first
+                    app.logger.info("Converting blob URL to data URL...")
+                    data_url = await page.evaluate(
+                        """
+                        async (src) => {
+                            const response = await fetch(src);
+                            const blob = await response.blob();
 
+                            return await new Promise((resolve, reject) => {
+                                const reader = new FileReader();
+                                reader.onload = () => resolve(reader.result);
+                                reader.onerror = reject;
+                                reader.readAsDataURL(blob);
+                            });
+                        }
+                        """,
+                        image_src,
+                    )
+                    _, encoded_data = data_url.split(",", 1)
+                    image_bytes = base64.b64decode(encoded_data)
+                    app.logger.info("Converted blob URL to image bytes")
+                    
+                else:
+                    # Regular HTTP URL
+                    app.logger.info(f"Downloading image from URL: {image_src}")
+                    response = await context.request.get(
+                        image_src,
+                        headers={"Referer": page.url},
+                        timeout=120000,
+                    )
+                    
+                    if not response.ok:
+                        raise Exception(f"Image download failed with HTTP {response.status}")
+                    
+                    image_bytes = await response.body()
+                    app.logger.info("Downloaded image from HTTP URL")
+                
+                # Normalize the image to PNG and get base64
+                with Image.open(BytesIO(image_bytes)) as image:
+                    # Convert to RGB if necessary (handles RGBA, etc.)
+                    if image.mode != 'RGB':
+                        image = image.convert('RGB')
+                    
+                    # Save as PNG to BytesIO
+                    png_buffer = BytesIO()
+                    image.save(png_buffer, format="PNG")
+                    png_bytes = png_buffer.getvalue()
+                    
+                    # Convert to base64
+                    base64_image = base64.b64encode(png_bytes).decode("utf-8")
+                    
+                    app.logger.info(f"Successfully generated {len(png_bytes)} byte PNG image ({image.size[0]}x{image.size[1]})")
+                    
+                    return {
+                        "success": True,
+                        "imageDataUrl": f"data:image/png;base64,{base64_image}",
+                        "imageId": "perchance_browser",
+                        "fileExtension": "png",
+                        "prompt": prompt,
+                        "resolution": f"{image.size[0]}x{image.size[1]}",
+                        "width": image.size[0],
+                        "height": image.size[1]
+                    }
+                    
+            finally:
+                await browser.close()
+                
+    except Exception as e:
+        app.logger.error(f"Perchance browser automation failed: {e}")
         return {
-            "success": True,
-            "imageDataUrl": f"data:{mime_type};base64,{base64_image}",
-            "imageId": result.image_id,
-            "fileExtension": result.file_extension,
-            "seed": result.seed,
-            "width": result.width,
-            "height": result.height,
-            "maybeNsfw": result.maybe_nsfw,
+            "success": False,
+            "error": f"Perchance browser automation error: {str(e)}",
             "prompt": prompt
         }
-
-
-async def generate_perchance_image(prompt, negative_prompt="", shape="portrait"):
-    """Generate image using Perchance ImageGenerator - DEPRECATED due to API changes"""
-    app.logger.warning("Perchance image generation is currently disabled due to API changes")
-    app.logger.info(f"Perchance now requires token verification that the library doesn't support")
-    app.logger.info(f"The /verifyUser endpoint returns: {{'status':'failed_verification','reason':'token_required'}}")
-    
-    # Return a structured error response instead of crashing
-    return {
-        "success": False,
-        "error": "Perchance service unavailable",
-        "details": "Perchance has changed their API requirements and now requires token authentication that the current library doesn't support. This is a known issue: https://github.com/eeemoon/perchance/issues/7",
-        "placeholder": True,
-        "prompt": prompt
-    }
 
 
 async def generate_placeholder_image(prompt, negative_prompt="", shape="portrait"):
@@ -896,17 +1045,12 @@ async def generate_placeholder_image(prompt, negative_prompt="", shape="portrait
 
 
 async def generate_website_image(prompt, negative_prompt="", shape="portrait", art_style="anime"):
-    """Generate image using website automation"""
-    app.logger.info(f"Generating image via website automation: prompt='{prompt}', style={art_style}, shape={shape}")
+    """Generate image using Perchance API (fallback)"""
+    app.logger.info(f"Fallback to Perchance API for: prompt='{prompt}', style={art_style}, shape={shape}")
     
     try:
-        # Use the website automation to generate a single image
-        images = await generate_images_via_website(prompt, art_style, shape, batch_size=1)
-        
-        if images and len(images) > 0:
-            return images[0]  # Return the first (and only) image
-        else:
-            raise Exception("Website automation returned no images")
+        # Use the direct API call
+        return await generate_perchance_image(prompt, negative_prompt, shape)
             
     except Exception as e:
         app.logger.error(f"Website automation failed: {e}")
@@ -931,11 +1075,10 @@ async def generate_image_with_fallback(prompt, negative_prompt="", shape="portra
     """Generate image with fallback providers"""
     app.logger.info("Starting image generation with fallback system...")
     
-    # Try website automation first, then fall back to placeholder
+    # Try Perchance API first, then fall back to placeholder
     providers = [
-        ("website", lambda p, n, s: generate_website_image(p, n, s, art_style)),
+        ("perchance", generate_perchance_image),
         ("placeholder", generate_placeholder_image),
-        # ("perchance", generate_perchance_image),  # Disabled due to API changes
         # Future: ("openai", generate_openai_image),
         # Future: ("stability", generate_stability_image),
     ]
@@ -959,7 +1102,7 @@ async def generate_image_with_fallback(prompt, negative_prompt="", shape="portra
     return {
         "success": False,
         "error": "All image generation services unavailable",
-        "details": "Perchance service is currently down due to API changes. Alternative providers not yet configured.",
+        "details": "All image generation providers failed.",
         "placeholder": True,
         "prompt": prompt
     }
