@@ -476,6 +476,7 @@ def generate_image_stream():
     )
 
 
+
 @app.route('/api/image/generate', methods=['POST', 'OPTIONS'])
 def generate_image():
     """Generate image using Perchance AI Text-to-Image Generator"""
@@ -842,9 +843,50 @@ async def generate_perchance_image(prompt, negative_prompt="", shape="portrait")
                         pass
                 
                 # Wait for some content to load
-                await page.wait_for_timeout(3000)  # Wait 3 seconds
+                await page.wait_for_timeout(5000)  # Wait 5 seconds
                 
-                # Check for any images that exist first
+                # Debug: Check page content and structure
+                page_content_info = await page.evaluate(
+                                    """
+                                    () => {
+                                        const bodyText = document.body.innerText;
+                                        const hasImages = document.images.length;
+                                        const hasCanvas = document.querySelectorAll('canvas').length;
+                                        const hasGenButton = !!document.querySelector('button, input[type="submit"], .generate, .create');
+                                        const hasPromptInput = !!document.querySelector('input[type="text"], textarea');
+                                        const bodyClasses = document.body.className;
+                                        const headings = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')].map(h => h.innerText);
+                
+                                        // Check for specific Perchance elements
+                                        const perchanceElements = {
+                                            outputDiv: !!document.querySelector('.output, #output'),
+                                            resultDiv: !!document.querySelector('.result, #result'),
+                                            generatedDiv: !!document.querySelector('.generated, #generated'),
+                                            imageContainer: !!document.querySelector('.image-container, #imageContainer'),
+                                            hasScript: document.scripts.length,
+                                            allDivs: [...document.querySelectorAll('div')].slice(0, 10).map(div => ({
+                                                className: div.className,
+                                                id: div.id,
+                                                textContent: div.textContent?.substring(0, 50) || ''
+                                            }))
+                                        };
+                
+                                        return {
+                                            bodyTextLength: bodyText.length,
+                                            bodyTextPreview: bodyText.substring(0, 300),
+                                            imageCount: hasImages,
+                                            canvasCount: hasCanvas,
+                                            hasGenButton,
+                                            hasPromptInput,
+                                            bodyClasses,
+                                            headings,
+                                            url: window.location.href,
+                                            perchanceElements
+                                        };
+                                    }
+                                    """
+                                )
+                app.logger.info(f"Page content info: {page_content_info}")                # Check for any images that exist first
                 existing_images = await page.evaluate(
                     """
                     () => {
@@ -860,47 +902,114 @@ async def generate_perchance_image(prompt, negative_prompt="", shape="portrait")
                 )
                 app.logger.info(f"Found {len(existing_images)} images on page: {existing_images}")
                 
-                # Try a more relaxed approach - wait for ANY image to appear, then give it time to fully load
+                # Enhanced image detection for dynamic content
                 try:
-                    # First wait for any image to appear
-                    await page.wait_for_selector("img", timeout=60000)
-                    app.logger.info("Found at least one image element")
+                    # Wait for page to finish initial loading
+                    await page.wait_for_load_state("networkidle", timeout=30000)
+                    app.logger.info("Network idle reached")
                     
-                    # Give it time for the actual image generation to complete
-                    await page.wait_for_timeout(10000)  # Wait 10 seconds for generation
+                    # Look for generated images with multiple strategies
+                    image_result = None
                     
-                    # Now look for the largest image that's actually loaded
-                    image_result = await page.wait_for_function(
-                        """
-                        () => {
-                            const images = [...document.images]
-                                .filter(img =>
-                                    img.complete &&
-                                    img.naturalWidth >= 100 &&  // Lowered threshold
-                                    img.naturalHeight >= 100 &&
-                                    !img.src.includes('icon') &&  // Exclude icons
-                                    !img.src.includes('logo')     // Exclude logos
-                                )
-                                .sort(
-                                    (a, b) =>
-                                        b.naturalWidth * b.naturalHeight -
-                                        a.naturalWidth * a.naturalHeight
-                                );
-
-                            if (images.length > 0) {
-                                console.log('Found images:', images.map(img => ({
-                                    src: img.src.substring(0, 50),
-                                    size: img.naturalWidth + 'x' + img.naturalHeight
-                                })));
-                                return images[0].currentSrc || images[0].src;
+                    # Strategy 1: Wait for images with Perchance-specific selectors
+                    perchance_selectors = [
+                        'img[src*="perchance"]',
+                        'img[src*="temporaryImage"]', 
+                        'img[src*="blob:"]',
+                        'img[data-src]',
+                        '.generated-image img',
+                        '.output-image img'
+                    ]
+                    
+                    for selector in perchance_selectors:
+                        try:
+                            await page.wait_for_selector(selector, timeout=5000)
+                            app.logger.info(f"Found image with selector: {selector}")
+                            break
+                        except:
+                            continue
+                    
+                    # Strategy 2: Monitor generation progress with periodic checks
+                    app.logger.info("Starting periodic generation monitoring...")
+                    
+                    generation_start_time = asyncio.get_event_loop().time()
+                    max_wait_time = 300  # 5 minutes
+                    check_interval = 15  # Check every 15 seconds
+                    
+                    image_src = None
+                    
+                    while True:
+                        elapsed_time = asyncio.get_event_loop().time() - generation_start_time
+                        
+                        if elapsed_time > max_wait_time:
+                            app.logger.error(f"Image generation timed out after {max_wait_time} seconds")
+                            break
+                        
+                        # Check current page status
+                        status_check = await page.evaluate("""
+                            () => {
+                                const bodyText = document.body.innerText;
+                                const allImages = [...document.images];
+                                const loadingText = bodyText.toLowerCase();
+                                
+                                const hasLoadingText = loadingText.includes('loading') || 
+                                                     loadingText.includes('generating') || 
+                                                     loadingText.includes('please wait');
+                                                     
+                                const generatedImages = allImages.filter(img => {
+                                    const src = img.src || '';
+                                    return (
+                                        img.complete && 
+                                        img.naturalWidth > 50 && 
+                                        img.naturalHeight > 50 &&
+                                        (
+                                            src.startsWith('blob:') ||
+                                            src.startsWith('data:image/') ||
+                                            src.includes('perchance') ||
+                                            src.includes('temporaryImage') ||
+                                            img.naturalWidth >= 200
+                                        )
+                                    );
+                                });
+                                
+                                return {
+                                    hasLoadingText,
+                                    imageCount: generatedImages.length,
+                                    images: generatedImages.map(img => ({
+                                        src: img.src.substring(0, 100),
+                                        size: `${img.naturalWidth}x${img.naturalHeight}`
+                                    })),
+                                    bodyTextPreview: bodyText.substring(0, 200)
+                                };
                             }
-                            return false;
-                        }
-                        """,
-                        timeout=60000,  # Reduced timeout
-                    )
-                    image_src = await image_result.json_value()
+                        """)
+                        
+                        app.logger.info(f"Generation check at {elapsed_time:.1f}s: {status_check}")
+                        
+                        # If we found images, use the first one
+                        if status_check['imageCount'] > 0:
+                            image_src = status_check['images'][0]['src']
+                            app.logger.info(f"Found generated image after {elapsed_time:.1f}s: {image_src[:100]}...")
+                            break
+                        
+                        # If no loading text and no images, something might be wrong
+                        if not status_check['hasLoadingText'] and status_check['imageCount'] == 0:
+                            app.logger.warning(f"No loading text and no images after {elapsed_time:.1f}s - generation may have failed")
+                            # Give it a bit more time in case there's a delay
+                            if elapsed_time > 60:  # After 1 minute, this is likely a failure
+                                app.logger.error("Generation appears to have failed - no loading text or images found")
+                                break
+                        
+                        # Wait before next check
+                        await page.wait_for_timeout(check_interval * 1000)
                     
+                    if not image_src:
+                        app.logger.error("Failed to find generated image after monitoring period")
+                        raise Exception("No images found during monitoring period")
+                        
+                    # Old wait_for_function approach (replaced by monitoring loop above)
+                    # image_result = await page.wait_for_function(...)
+                    # image_src = await image_result.json_value()
                 except Exception as e:
                     app.logger.warning(f"Failed to find generated image: {e}")
                     # Fallback: just grab the largest image on the page
